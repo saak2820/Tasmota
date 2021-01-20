@@ -824,6 +824,13 @@ void SettingsDefaultSet2(void)
   SettingsUpdateText(SET_STAPWD2, PSTR(STA_PASS2));
   SettingsUpdateText(SET_HOSTNAME, WIFI_HOSTNAME);
 
+// -- FritzBox --------------------------------------
+  flag.fritzbox_enabled |= FRITZBOX_USE;
+  SettingsUpdateText(SET_FRITZBOX_USER, PSTR(FRITZBOX_USER));
+  SettingsUpdateText(SET_FRITZBOX_PASS, PSTR(FRITZBOX_PASS));
+  SettingsUpdateText(SET_FRITZBOX_HOST, PSTR(FRITZBOX_HOST));
+  Settings.fritzbox_port = FRITZBOX_PORT;
+
   // Syslog
   SettingsUpdateText(SET_SYSLOG_HOST, PSTR(SYS_LOG_HOST));
   Settings.syslog_port = SYS_LOG_PORT;

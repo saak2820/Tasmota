@@ -389,6 +389,7 @@
 #define D_CMND_EMULATION "Emulation"
 #define D_CMND_SENDMAIL "Sendmail"
 #define D_CMND_CORS "CORS"
+#define D_CMND_FRITZBOX "SendFritzBox"
 
 // Commands xdrv_03_energy.ino
 #define D_CMND_POWERLOW "PowerLow"
@@ -692,6 +693,7 @@
 #define D_LOG_WIFI "WIF: "         // Wifi
 #define D_LOG_ZIGBEE "ZIG: "       // Zigbee
 #define D_LOG_TCP "TCP: "          // TCP bridge
+#define D_LOG_FRITZBOX "FBO: "          // FritzBox
 
 /********************************************************************************************/
 

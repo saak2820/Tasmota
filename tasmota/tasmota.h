@@ -286,6 +286,7 @@ enum SettingsTextIndex { SET_OTAURL,
                          SET_MQTTPREFIX1, SET_MQTTPREFIX2, SET_MQTTPREFIX3,  // MAX_MQTT_PREFIXES
                          SET_STASSID1, SET_STASSID2,  // MAX_SSIDS
                          SET_STAPWD1, SET_STAPWD2,  // MAX_SSIDS
+                         SET_FRITZBOX_HOST, SET_FRITZBOX_USER, SET_FRITZBOX_PASS,
                          SET_HOSTNAME, SET_SYSLOG_HOST,
                          SET_WEBPWD, SET_CORS,
                          SET_MQTT_HOST, SET_MQTT_CLIENT,
