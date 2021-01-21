@@ -83,7 +83,7 @@
 #define WIFI_SCAN_REGULARLY    true              // [SetOption57] Scan wifi network every 44 minutes for configured AP's
 
 // -- FritzBox --------------------------------------
-#define FRITZBOX_USE          true              // [SetOption32] Select default FRITZBOX use (false = Off, true = On)
+#define FRITZBOX_USE          true              // [SetOption120] Select default FRITZBOX use (false = Off, true = On)
 #define FRITZBOX_USER         "DVES_USER"       // [FritzBoxUser] user
 #define FRITZBOX_PASS         "DVES_PASS"       // [FritzBoxPassword] password
 #define FRITZBOX_IP           "192.168.178.1"   // [FritzBoxHost] This should be "192.168.178.1" for most FRITZ!Boxes
@@ -150,7 +150,6 @@
 
 // -- MQTT - Domoticz -----------------------------
 #define DOMOTICZ_UPDATE_TIMER  0                 // [DomoticzUpdateTimer] Send relay status (0 = disable, 1 - 3600 seconds)
-
 // -- MQTT - Home Assistant Discovery -------------
 #define HOME_ASSISTANT_DISCOVERY_ENABLE   false  // [SetOption19] Home Assistant Discovery (false = Disable, true = Enable)
 #define HASS_AS_LIGHT          false             // [SetOption30] Enforce HAss autodiscovery as light

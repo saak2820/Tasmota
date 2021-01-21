@@ -313,6 +313,7 @@
 #define D_DEVICE_NAME "Device Name"
 #define D_WEB_ADMIN_PASSWORD "Passwort für Web Oberfläche"
 #define D_MQTT_ENABLE "MQTT aktivieren"
+#define D_FRITZBOX_ENABLE "FritzBox aktivieren"
 #define D_MQTT_TLS_ENABLE "MQTT TLS"
 #define D_FRIENDLY_NAME "Name [friendly name]"
 #define D_BELKIN_WEMO "Belkin WeMo"
@@ -485,6 +486,18 @@
 #define D_ZIGBEE_RESET_1_OR_2 "1 oder 2 für Reset"
 #define D_ZIGBEE_EEPROM_FOUND_AT_ADDRESS "ZBBridge EEPROM gefunden auf Addresse"
 #define D_ZIGBEE_RANDOMIZING_ZBCONFIG "Zufällige Zigbee Parameter erstellt, Überprüfung mit 'ZbConfig'"
+
+// xdrv_47_fritzbox.ino
+#define D_FRITZBOX "FritzBox"
+#define D_CONFIGURE_FRITZBOX "FritzBox konfigurieren"
+#define D_FRITZ_PARAMETERS "FritzBox-Einstellungen"
+// #define D_FRITZBOX_ENABLE "FritzBox aktivieren"
+// #define D_LOG_FRITZBOX "FBO: "          // FritzBox
+#define D_CMND_FRITZUSER "FritzBoxUser"
+#define D_CMND_FRITZPASSWORD "FritzBoxPassword"
+#define D_FRITZBOX_HOST "FritzBox Host"
+#define D_FRITZBOX_PORT "FritzBox Port"
+#define D_FRITZBOX_USER "FritzBox Benutzer"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Energie heute"

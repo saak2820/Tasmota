@@ -145,7 +145,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t fade_fixed_duration : 1;      // bit 3 (v9.1.0.2)   - SetOption117 - (Light) run fading at fixed duration instead of fixed slew rate
     uint32_t zb_received_as_subtopic : 1;  // bit 4 (v9.2.0.3)   - SetOption118 - (Zigbee) Move ZbReceived from JSON message and into the subtopic replacing "SENSOR" default
     uint32_t zb_omit_json_addr : 1;        // bit 5 (v9.2.0.3)   - SetOption119 - (Zigbee) Remove the device addr from json payload, can be used with zb_topic_fname where the addr is already known from the topic
-    uint32_t spare06 : 1;                  // bit 6
+    uint32_t fritzbox_enabled : 1;         // bit 6              - SetOption120 - (TR064) Enable (1)    
     uint32_t spare07 : 1;                  // bit 7
     uint32_t spare08 : 1;                  // bit 8
     uint32_t spare09 : 1;                  // bit 9
@@ -641,8 +641,9 @@ struct {
   uint8_t       shd_leading_edge;          // F5B
   uint16_t      shd_warmup_brightness;     // F5C
   uint8_t       shd_warmup_time;           // F5E
-
-  uint8_t       free_f5e[72];              // F5E - Decrement if adding new Setting variables just above and below
+  uint16_t      fritzbox_port;             // F60
+  
+  uint8_t       free_f5e[70];              // F60 - Decrement if adding new Setting variables just above and below
 
   // Only 32 bit boundary variables below
 

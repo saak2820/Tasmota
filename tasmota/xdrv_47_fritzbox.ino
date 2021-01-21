@@ -269,7 +269,7 @@ bool Xdrv47(uint8_t function)
 {
   bool result = false;
   
- if (Settings.flag.fritzbox_enabled) {  // SetOption32 - Enable 
+ if (Settings.flag5.fritzbox_enabled) {  // SetOption120 - Enable 
     switch (function) {
       
       case FUNC_COMMAND:

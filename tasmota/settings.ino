@@ -825,7 +825,7 @@ void SettingsDefaultSet2(void)
   SettingsUpdateText(SET_HOSTNAME, WIFI_HOSTNAME);
 
 // -- FritzBox --------------------------------------
-  flag.fritzbox_enabled |= FRITZBOX_USE;
+  flag5.fritzbox_enabled |= FRITZBOX_USE;
   SettingsUpdateText(SET_FRITZBOX_USER, PSTR(FRITZBOX_USER));
   SettingsUpdateText(SET_FRITZBOX_PASS, PSTR(FRITZBOX_PASS));
   SettingsUpdateText(SET_FRITZBOX_HOST, PSTR(FRITZBOX_HOST));
