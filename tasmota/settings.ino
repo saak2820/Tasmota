@@ -1102,6 +1102,7 @@ void SettingsDefaultSet2(void)
   Settings.flag2 = flag2;
   Settings.flag3 = flag3;
   Settings.flag4 = flag4;
+  Settings.flag5 = flag5;
 }
 
 /********************************************************************************************/

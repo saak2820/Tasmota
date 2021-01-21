@@ -1886,9 +1886,10 @@ void HandleOtherConfiguration(void)
   WSContentSend_P(HTTP_FORM_OTHER, stemp, (USER_MODULE == Settings.module) ? PSTR(" checked disabled") : "",
     (Settings.flag.mqtt_enabled) ? PSTR(" checked") : "",   // SetOption3 - Enable MQTT
 #ifdef USE_FRITZBOX
-    (Settings.flag5.fritzbox_enabled) ? " checked" : "",   // SetOption120 - Enable FRITZBOX
+    (Settings.flag5.fritzbox_enabled) ? PSTR(" checked") : "",   // SetOption120 - Enable FRITZBOX
 #endif  // USE_FRITZBOX
     SettingsText(SET_FRIENDLYNAME1), SettingsText(SET_DEVICENAME));
+
 
   uint32_t maxfn = (TasmotaGlobal.devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : (!TasmotaGlobal.devices_present) ? 1 : TasmotaGlobal.devices_present;
 #ifdef USE_SONOFF_IFAN
@@ -1944,7 +1945,7 @@ void OtherSaveSettings(void)
   SettingsUpdateText(SET_WEBPWD, (!strlen(tmp)) ? "" : (strchr(tmp,'*')) ? SettingsText(SET_WEBPWD) : tmp);
   Settings.flag.mqtt_enabled = Webserver->hasArg(F("b1"));  // SetOption3 - Enable MQTT
 #ifdef USE_FRITZBOX
-  Settings.flag5.fritzbox_enabled = Webserver->hasArg("b4");  // SetOption120 - Enable FRITZBOX
+  Settings.flag5.fritzbox_enabled = Webserver->hasArg(F("b4"));  // SetOption120 - Enable FRITZBOX
 #endif  // USE_FRITZBOX
 #ifdef USE_EMULATION
   UdpDisconnect();
@@ -2153,11 +2154,8 @@ void HandleInformation(void)
     WSContentSend_P(PSTR("}1" D_MQTT "}2" D_DISABLED));
   }
 #ifdef USE_FRITZBOX
-
-  if (Settings.flag5.fritzbox_enabled) {  // SetOption120 - Enable MQTT
-    
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "fritzbox_enabled %d"), Settings.flag5.fritzbox_enabled);
-
+AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "fritzbox_enabled %d"), Settings.flag5.fritzbox_enabled);
+  if (Settings.flag5.fritzbox_enabled) {  // SetOption120 - Enable TR064
     WSContentSend_P(PSTR("}1" D_FRITZBOX_HOST "}2%s"), SettingsText(SET_FRITZBOX_HOST));
     WSContentSend_P(PSTR("}1" D_FRITZBOX_PORT "}2%d"), Settings.fritzbox_port);
     WSContentSend_P(PSTR("}1" D_FRITZBOX_USER "}2%s"), SettingsText(SET_FRITZBOX_USER));    
