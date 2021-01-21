@@ -13,15 +13,15 @@ _Written for PlatformIO with limited support for Arduino IDE._
 [![Chat](https://img.shields.io/discord/479389167382691863.svg)](https://discord.gg/Ks2Kzd4)
 [![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-Ready--to--Code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/arendst/Tasmota)
 
-
-
-
 ## Using TR-064 Protocol from https://github.com/Aypac
 
 # Arduino-TR-064-SOAP-Library [![Build Status](https://travis-ci.com/Aypac/Arduino-TR-064-SOAP-Library.svg?branch=master)](https://travis-ci.com/Aypac/Arduino-TR-064-SOAP-Library)
 Arduino library to facilitate the use of the TR-064 protocol ([Aypacs "simple" explanation](https://github.com/Aypac/Arduino-TR-064-SOAP-Library/wiki/How-does-the-TR-064-protocol-work%3F), the [definition](https://www.broadband-forum.org/technical/download/TR-064.pdf) and an official [description](https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/AVM_TR-064_first_steps.pdf)), most commonly used by Fritz!Box.
 
-## Made Configuration :
+  
+---
+
+### I Made the FritzBox Configuration over Webserver :
 
 ![Tasmota logo](/tools/screenshots/FritzMenu.PNG)
 
@@ -43,3 +43,7 @@ delay((8000)
 ```
 
 works so far...
+
+TODO   
+    - Response Parameter not implemented yet  
+    - Response to WebServer Output/MQTT
