@@ -82,6 +82,20 @@ Examples :
 #define WIFI_DNS            MY_DNS               // If not using DHCP set DNS IP address (might be equal to WIFI_GATEWAY)
 #endif
 
+
+// -- FritzBox --------------------------------------
+#undef  FRITZBOX_USER
+#define FRITZBOX_USER         "YourUser"       // [FritzBoxUser] user
+
+#undef  FRITZBOX_PASS
+#define FRITZBOX_PASS         "YourPasswd"       // [FritzBoxPassword] password
+
+#undef  FRITZBOX_HOST
+#define FRITZBOX_HOST          "192.168.178.1"   // [FritzBoxHost] This should be "192.168.178.1" for most FRITZ!Boxes
+
+#undef  FRITZBOX_PORT
+#define FRITZBOX_PORT         49000             //
+
 */
 
 

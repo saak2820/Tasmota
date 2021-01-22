@@ -1,5 +1,5 @@
 /*
-  xdrv_47_fritzbox.ino - fritzbox for Tasmota
+  xdrv_53_fritzbox.ino - fritzbox for Tasmota
 
   Copyright (C) 2020  
 
@@ -39,7 +39,7 @@ WiFiClient tr064client;
  * #define USE_fritzbox                             // Support for tr-064 protocol
  \*********************************************************************************************/
 
-#define XDRV_47                    47
+#define XDRV_53                    53
 
 // #define D_FRITZBOX "FritzBox"
 // #define D_CONFIGURE_FRITZBOX "FritzBox konfigurieren"
@@ -184,7 +184,6 @@ void FBInit(void) {
 
     tr064.debug_level = Settings.seriallog_level;
     tr064.setServer(FRITZBOX_HOST, Settings.fritzbox_port,FRITZBOX_USER, FRITZBOX_PASS);
-   // tr064.init();
     AddLog_P(LOG_LEVEL_INFO, "FBInit: TR064.init %s",tr064.state()<0?"NoServices":"OK");
   }else{
     AddLog_P(LOG_LEVEL_INFO, "FBInit: network.down");
@@ -265,10 +264,9 @@ void FritzBoxSaveSettings(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv47(uint8_t function)
+bool Xdrv53(uint8_t function)
 {
   bool result = false;
-  
  if (Settings.flag5.fritzbox_enabled) {  // SetOption120 - Enable 
     switch (function) {
       
@@ -277,6 +275,7 @@ bool Xdrv47(uint8_t function)
         break;      
 #ifdef USE_WEBSERVER
       case FUNC_WEB_ADD_BUTTON:
+        AddLog_P(LOG_LEVEL_DEBUG,"[Xdrv53] ADD_BUTTON: ");
         WSContentSend_P(HTTP_BTN_MENU_FRITZ);
         break;
       case FUNC_WEB_ADD_HANDLER:        
@@ -285,7 +284,7 @@ bool Xdrv47(uint8_t function)
         break;
 #endif  // USE_WEBSERVER
       case FUNC_MQTT_INIT:
-        AddLog_P(LOG_LEVEL_INFO,"[Xdrv47] FUNC_MQTT_INIT");
+        AddLog_P(LOG_LEVEL_DEBUG,"[Xdrv53] FUNC_MQTT_INIT");        
         FBInit();
         break;
     }
