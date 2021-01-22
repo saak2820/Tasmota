@@ -82,13 +82,11 @@
 #define WIFI_SCAN_AT_RESTART   false             // [SetOption56] Scan wifi network at restart for configured AP's
 #define WIFI_SCAN_REGULARLY    true              // [SetOption57] Scan wifi network every 44 minutes for configured AP's
 
-
-// -- FritzBox TR064 Protocol ---------------------------
-#define FRITZBOX_USE           true              // [SetOption120] Select default TR064 use (false = Off, true = On)
-
+// -- FritzBox --------------------------------------
+#define FRITZBOX_USE          true              // [SetOption120] Select default FRITZBOX use (false = Off, true = On)
 #define FRITZBOX_USER         "DVES_USER"       // [FritzBoxUser] user
 #define FRITZBOX_PASS         "DVES_PASS"       // [FritzBoxPassword] password
-#define FRITZBOX_HOST         "192.168.178.1"   // [FritzBoxHost] This should be "192.168.178.1" for most FRITZ!Boxes
+#define FRITZBOX_IP           "192.168.178.1"   // [FritzBoxHost] This should be "192.168.178.1" for most FRITZ!Boxes
 #define FRITZBOX_PORT         49000             // 
 
 // -- Syslog --------------------------------------
@@ -413,6 +411,9 @@
                                                    // Enable this if you want to disable the old algo check, which should be more secure
 //  for USE_4K_RSA (support for 4096 bits certificates, instead of 2048), you need to uncommend `-DUSE_4K_RSA` in `build_flags` from `platform.ini` or `platform_override.ini`
 
+// -- TR064 Protocol ---------------------------
+#define USE_FRITZBOX
+
 // -- Telegram Protocol ---------------------------
 //#define USE_TELEGRAM                             // Support for Telegram protocol (+49k code, +7.0k mem and +4.8k additional during connection handshake)
   #define USE_TELEGRAM_FINGERPRINT "\xB2\x72\x47\xA6\x69\x8C\x3C\x69\xF9\x58\x6C\xF3\x60\x02\xFB\x83\xFA\x8B\x1F\x23" // Telegram api.telegram.org TLS public key fingerpring
@@ -421,11 +422,6 @@
 // -- KNX IP Protocol -----------------------------
 //#define USE_KNX                                  // Enable KNX IP Protocol Support (+9.4k code, +3k7 mem)
   #define USE_KNX_WEB_MENU                       // Enable KNX WEB MENU (+8.3k code, +144 mem)
-
-// -- TR064 ----------------------------------------
-#define USE_FRITZBOX                            // Enable TR064 Protocol/Fritzbox
-
-
 
 // -- HTTP ----------------------------------------
 #define USE_WEBSERVER                            // Enable web server and Wifi Manager (+66k code, +8k mem)

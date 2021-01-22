@@ -487,7 +487,7 @@
 #define D_ZIGBEE_EEPROM_FOUND_AT_ADDRESS "ZBBridge EEPROM gefunden auf Addresse"
 #define D_ZIGBEE_RANDOMIZING_ZBCONFIG "Zufällige Zigbee Parameter erstellt, Überprüfung mit 'ZbConfig'"
 
-// xdrv_53_fritzbox.ino
+// xdrv_47_fritzbox.ino
 #define D_FRITZBOX "FritzBox"
 #define D_CONFIGURE_FRITZBOX "FritzBox konfigurieren"
 #define D_FRITZ_PARAMETERS "FritzBox-Einstellungen"
