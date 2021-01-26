@@ -366,15 +366,15 @@ void TR064::takeNonce(const String& xml) {
     if (xml != "") {
         if (xmlTakeParam(xml, "Nonce") != "") {
             _nonce = xmlTakeParam(xml, "Nonce");
-            deb_println("Extracted the nonce '" + _nonce + "' from the last request.", DEBUG_INFO);
+            deb_println("[TR064] Extracted the nonce '" + _nonce + "' from the last request.", DEBUG_INFO);
         }
         if (_realm == "" && xmlTakeParam(xml, "Realm") != "") {
             _realm = xmlTakeParam(xml, "Realm");
             // Now we have everything to generate our hashed secret.
             String secr = _user + ":" + _realm + ":" + _pass;
-            deb_println("Your secret is is '" + secr + "'", DEBUG_INFO);
+            deb_println("[TR064] Your secret is is '" + secr + "'", DEBUG_INFO);
             _secretH = md5String(secr);
-            deb_println("Your hashed secret is '" + _secretH + "'", DEBUG_INFO);
+            deb_println("[TR064] Your hashed secret is '" + _secretH + "'", DEBUG_INFO);
         }
     }
 }
@@ -447,15 +447,7 @@ String& TR064::httpRequest(const String& url, const String& xml, const String& s
     if(url==""){
         _payload="";return _payload;
     }
-    deb_println("[TR064] Posting to URL:"+url, DEBUG_INFO);
     
-    if(http.connected()){
-deb_println("[TR064] httpRequest Wifi Connected:"+url, DEBUG_INFO);
-    }else{
-deb_println("[TR064] httpRequest Wifi NOT Connected", DEBUG_INFO);
-    }
-
-
     http.begin(tr064client, _ip, _port, url,false);
     http.setTimeout(TR064_SOCKET_TIMEOUT);
 
@@ -468,9 +460,9 @@ deb_println("[TR064] httpRequest Wifi NOT Connected", DEBUG_INFO);
     int httpCode=0;
     if (xml) {
         deb_println("[TR064] Posting XML:", DEBUG_VERBOSE);
-        deb_println("---------------------------------", DEBUG_VERBOSE);
+        deb_println("[TR064] ---------------------------------", DEBUG_VERBOSE);
         deb_println(xml, DEBUG_VERBOSE);
-        deb_println("---------------------------------\n", DEBUG_VERBOSE);
+        deb_println("[TR064] ---------------------------------\n", DEBUG_VERBOSE);
         
         httpCode = http.POST(xml);
         deb_println("[TR064] POST... SOAPACTION: '" + soapaction + "'", DEBUG_VERBOSE);
@@ -501,20 +493,20 @@ deb_println("[TR064] httpRequest Wifi NOT Connected", DEBUG_INFO);
         
         if (retry) {
             _nonce = "";
-            deb_println("[TR064]<Error> Trying again in 1s.", DEBUG_ERROR);
+            deb_println("[TR064] <Error> Trying again in 1s.", DEBUG_ERROR);
             delay(1000);
             return httpRequest(url, xml, soapaction, false);
         } else {
-            deb_println("[TR064]<Error> Giving up.", DEBUG_ERROR);
+            deb_println("[TR064] <Error> Giving up.", DEBUG_ERROR);
             _payload="";
             return _payload;
         }
     }
     
     deb_println("[TR064] Received back", DEBUG_VERBOSE);
-    deb_println("---------------------------------", DEBUG_VERBOSE);
+    deb_println("[TR064] ---------------------------------", DEBUG_VERBOSE);
     deb_println(_payload, DEBUG_VERBOSE);
-    deb_println("---------------------------------\n", DEBUG_VERBOSE);
+    deb_println("[TR064] ---------------------------------\n", DEBUG_VERBOSE);
     return _payload;
 }
 

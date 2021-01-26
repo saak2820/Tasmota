@@ -2997,6 +2997,8 @@ void CmndSendFritzBox(void)
   AddLog_P(LOG_LEVEL_INFO,PSTR(D_LOG_HTTP "CmndSendFritzBox"));
   if (XdrvMailbox.data_len > 0) {    
     uint8_t result = SendFritzBox(XdrvMailbox.data); 
+    char stemp1[20];
+    ResponseCmndChar(GetTextIndexed(stemp1, sizeof(stemp1), result, kWebSendStatus));
   }
 }
 #endif  // USE_FRITZBOX

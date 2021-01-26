@@ -163,9 +163,7 @@ if (*buffer!='[') {
 
 
           tr064.action(service, action, tr064_params, ip);//, tr064_req, iq);
-          int freeMem = ESP_getFreeHeap();
-          AddLog_P(LOG_LEVEL_INFO,PSTR(D_LOG_FRITZBOX D_FREE_MEMORY "2%dkB"), freeMem / 1024);
-
+          
           status=0; 
           AddLog_P(LOG_LEVEL_INFO, "FBInit: TR064.init %s",tr064.state()<0?"NoServices":"OK");
         
