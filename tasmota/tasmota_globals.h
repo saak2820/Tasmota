@@ -132,6 +132,8 @@ String EthernetMacAddress(void);
 
 #define USE_UFILESYS
 
+#undef FIRMWARE_MINIMAL                            // Minimal is not supported as not needed
+
 // Hardware has no ESP32
 #undef USE_TUYA_DIMMER
 #undef USE_PWM_DIMMER
@@ -471,7 +473,6 @@ const char kWebColors[] PROGMEM =
 
 #ifdef USE_DEVICE_GROUPS
 #define SendDeviceGroupMessage(DEVICE_INDEX, REQUEST_TYPE, ...) _SendDeviceGroupMessage(DEVICE_INDEX, REQUEST_TYPE, __VA_ARGS__, 0)
-#define SendLocalDeviceGroupMessage(REQUEST_TYPE, ...) _SendDeviceGroupMessage(0, REQUEST_TYPE, __VA_ARGS__, 0)
 uint8_t device_group_count = 0;
 bool first_device_group_is_local = true;
 #endif  // USE_DEVICE_GROUPS

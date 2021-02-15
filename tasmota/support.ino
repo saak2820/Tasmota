@@ -713,44 +713,6 @@ char* GetPowerDevice(char* dest, uint32_t idx, size_t size)
   return GetPowerDevice(dest, idx, size, 0);
 }
 
-void GetEspHardwareType(void)
-{
-#ifdef ESP8266
-  // esptool.py get_efuses
-  uint32_t efuse1 = *(uint32_t*)(0x3FF00050);
-  uint32_t efuse2 = *(uint32_t*)(0x3FF00054);
-//  uint32_t efuse3 = *(uint32_t*)(0x3FF00058);
-//  uint32_t efuse4 = *(uint32_t*)(0x3FF0005C);
-
-  TasmotaGlobal.is_8285 = ( (efuse1 & (1 << 4)) || (efuse2 & (1 << 16)) );
-  if (TasmotaGlobal.is_8285 && (ESP.getFlashChipRealSize() > 1048576)) {
-    TasmotaGlobal.is_8285 = false;  // ESP8285 can only have 1M flash
-  }
-#else
-  TasmotaGlobal.is_8285 = false;    // ESP8285 can only have 1M flash
-#endif
-}
-
-String GetDeviceHardware(void)
-{
-  char buff[10];
-#ifdef ESP8266
-  if (TasmotaGlobal.is_8285) {
-    strcpy_P(buff, PSTR("ESP8285"));
-  } else {
-    strcpy_P(buff, PSTR("ESP8266EX"));
-  }
-#endif  // ESP8266
-#ifdef ESP32
-#if CONFIG_IDF_TARGET_ESP32S2  // ESP32-S2
-  strcpy_P(buff, PSTR("ESP32-S2"));
-#else
-  strcpy_P(buff, PSTR("ESP32"));
-#endif  // CONFIG_IDF_TARGET_ESP32S2
-#endif  // ESP32
-  return String(buff);
-}
-
 float ConvertTemp(float c)
 {
   float result = c;
@@ -1358,8 +1320,8 @@ void DumpConvertTable(void) {
 */
 #endif  // ESP8266
 
-uint32_t ICACHE_RAM_ATTR Pin(uint32_t gpio, uint32_t index = 0);
-uint32_t ICACHE_RAM_ATTR Pin(uint32_t gpio, uint32_t index) {
+int ICACHE_RAM_ATTR Pin(uint32_t gpio, uint32_t index = 0);
+int ICACHE_RAM_ATTR Pin(uint32_t gpio, uint32_t index) {
   uint16_t real_gpio = gpio << 5;
   uint16_t mask = 0xFFE0;
   if (index < GPIO_ANY) {
@@ -1371,12 +1333,12 @@ uint32_t ICACHE_RAM_ATTR Pin(uint32_t gpio, uint32_t index) {
       return i;              // Pin number configured for gpio
     }
   }
-  return 99;                 // No pin used for gpio
+  return -1;                 // No pin used for gpio
 }
 
 bool PinUsed(uint32_t gpio, uint32_t index = 0);
 bool PinUsed(uint32_t gpio, uint32_t index) {
-  return (Pin(gpio, index) < 99);
+  return (Pin(gpio, index) >= 0);
 }
 
 uint32_t GetPin(uint32_t lpin) {
@@ -1585,7 +1547,6 @@ uint32_t ValidPin(uint32_t pin, uint32_t gpio) {
     return GPIO_NONE;    // Disable flash pins GPIO6, GPIO7, GPIO8 and GPIO11
   }
 
-//  if (!TasmotaGlobal.is_8285 && !Settings.flag3.user_esp8285_enable) {  // SetOption51 - Enable ESP8285 user GPIO's
   if ((WEMOS == Settings.module) && !Settings.flag3.user_esp8285_enable) {  // SetOption51 - Enable ESP8285 user GPIO's
     if ((9 == pin) || (10 == pin)) {
       return GPIO_NONE;  // Disable possible flash GPIO9 and GPIO10
@@ -1608,7 +1569,7 @@ bool ValidSpiPinUsed(uint32_t gpio) {
   // ESP8266: If SPI pin selected chk if it's not one of the three Hardware SPI pins (12..14)
   bool result = false;
   if (PinUsed(gpio)) {
-    uint32_t pin = Pin(gpio);
+    int pin = Pin(gpio);
     result = ((pin < 12) || (pin > 14));
   }
   return result;
@@ -2312,28 +2273,3 @@ String Decompress(const char * compressed, size_t uncompressed_size) {
 }
 
 #endif // USE_UNISHOX_COMPRESSION
-
-/*********************************************************************************************\
- * High entropy hardware random generator
- * Thanks to DigitalAlchemist
-\*********************************************************************************************/
-// Based on code from https://raw.githubusercontent.com/espressif/esp-idf/master/components/esp32/hw_random.c
-uint32_t HwRandom(void) {
-#if ESP8266
-  // https://web.archive.org/web/20160922031242/http://esp8266-re.foogod.com/wiki/Random_Number_Generator
-  #define _RAND_ADDR 0x3FF20E44UL
-#endif  // ESP8266
-#ifdef ESP32
-  #define _RAND_ADDR 0x3FF75144UL
-#endif  // ESP32
-  static uint32_t last_ccount = 0;
-  uint32_t ccount;
-  uint32_t result = 0;
-  do {
-    ccount = ESP.getCycleCount();
-    result ^= *(volatile uint32_t *)_RAND_ADDR;
-  } while (ccount - last_ccount < 64);
-  last_ccount = ccount;
-  return result ^ *(volatile uint32_t *)_RAND_ADDR;
-#undef _RAND_ADDR
-}

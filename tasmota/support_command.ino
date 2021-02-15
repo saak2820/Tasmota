@@ -36,7 +36,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
 #ifdef USE_DEVICE_GROUPS_SEND
   D_CMND_DEVGROUP_SEND "|"
 #endif  // USE_DEVICE_GROUPS_SEND
-  D_CMND_DEVGROUP_SHARE "|" D_CMND_DEVGROUPSTATUS "|"
+  D_CMND_DEVGROUP_SHARE "|" D_CMND_DEVGROUPSTATUS "|" D_CMND_DEVGROUP_DEVICE "|"
 #endif  // USE_DEVICE_GROUPS
   D_CMND_SENSOR "|" D_CMND_DRIVER
 #ifdef ESP32
@@ -63,7 +63,7 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
 #ifdef USE_DEVICE_GROUPS_SEND
   &CmndDevGroupSend,
 #endif  // USE_DEVICE_GROUPS_SEND
-  &CmndDevGroupShare, &CmndDevGroupStatus,
+  &CmndDevGroupShare, &CmndDevGroupStatus, &CmndDevGroupTie,
 #endif  // USE_DEVICE_GROUPS
   &CmndSensor, &CmndDriver
 #ifdef ESP32
@@ -484,8 +484,7 @@ void CmndStatus(void)
   }
 
   if ((0 == payload) || (4 == payload)) {
-    float freeMem = ESP_getFreeHeap1024();
-    Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS4_MEMORY "\":{\"" D_JSON_PROGRAMSIZE "\":%d,\"" D_JSON_FREEMEMORY "\":%d,\"" D_JSON_HEAPSIZE "\":%1_f,\""
+    Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS4_MEMORY "\":{\"" D_JSON_PROGRAMSIZE "\":%d,\"" D_JSON_FREEMEMORY "\":%d,\"" D_JSON_HEAPSIZE "\":%d,\""
 #ifdef ESP32
                           D_JSON_PSRMAXMEMORY "\":%d,\"" D_JSON_PSRFREEMEMORY "\":%d,\""
 #endif  // ESP32
@@ -494,7 +493,7 @@ void CmndStatus(void)
                           ",\"" D_JSON_FLASHCHIPID "\":\"%06X\""
 #endif  // ESP8266
                           ",\"FlashFrequency\":%d,\"" D_JSON_FLASHMODE "\":%d"),
-                          ESP_getSketchSize()/1024, ESP.getFreeSketchSpace()/1024, &freeMem,
+                          ESP_getSketchSize()/1024, ESP.getFreeSketchSpace()/1024, ESP_getFreeHeap1024(),
 #ifdef ESP32
                           ESP.getPsramSize()/1024, ESP.getFreePsram()/1024,
 #endif  // ESP32
@@ -845,35 +844,67 @@ void CmndSetoption(void) {
   CmndSetoptionBase(1);
 }
 
+// Code called by SetOption and by Berrt
+bool SetoptionDecode(uint32_t index, uint32_t *ptype, uint32_t *pindex) {
+  if (index < 146) {
+    if (index <= 31) {         // SetOption0 .. 31 = Settings.flag
+      *ptype = 2;
+      *pindex = index;          // 0 .. 31
+    }
+    else if (index <= 49) {    // SetOption32 .. 49 = Settings.param
+      *ptype = 1;
+      *pindex = index -32;      // 0 .. 17 (= PARAM8_SIZE -1)
+    }
+    else if (index <= 81) {    // SetOption50 .. 81 = Settings.flag3
+      *ptype = 3;
+      *pindex = index -50;      // 0 .. 31
+    }
+    else if (index <= 113) {    // SetOption82 .. 113 = Settings.flag4
+      *ptype = 4;
+      *pindex = index -82;      // 0 .. 31
+    }
+    else {                                 // SetOption114 .. 145 = Settings.flag5
+      *ptype = 5;
+      *pindex = index -114;     // 0 .. 31
+    }
+    return true;
+  }
+  return false;
+}
+
+uint32_t GetOption(uint32_t index) {
+  uint32_t ptype;
+  uint32_t pindex;
+  if (SetoptionDecode(index, &ptype, &pindex)) {
+    if (1 == ptype) {
+      return Settings.param[pindex];
+    } else {
+      uint32_t flag = Settings.flag.data;
+      if (3 == ptype) {
+        flag = Settings.flag3.data;
+      }
+      else if (4 == ptype) {
+        flag = Settings.flag4.data;
+      }
+      else if (5 == ptype) {
+        flag = Settings.flag5.data;
+      }
+      return bitRead(flag, pindex);
+    }
+  } else {
+    return 0;   // fallback
+  }
+}
+
 void CmndSetoptionBase(bool indexed) {
   // Allow a command to access a single SetOption by it's command name
   // indexed = 0 : No index will be returned attached to the command
   //               {"ClockDirection":"OFF"}
   // indexed = 1 : The SetOption index will be returned with the command
   //               {"SetOption16":"OFF"}
-  if (XdrvMailbox.index < 146) {
-    uint32_t ptype;
-    uint32_t pindex;
-    if (XdrvMailbox.index <= 31) {         // SetOption0 .. 31 = Settings.flag
-      ptype = 2;
-      pindex = XdrvMailbox.index;          // 0 .. 31
-    }
-    else if (XdrvMailbox.index <= 49) {    // SetOption32 .. 49 = Settings.param
-      ptype = 1;
-      pindex = XdrvMailbox.index -32;      // 0 .. 17 (= PARAM8_SIZE -1)
-    }
-    else if (XdrvMailbox.index <= 81) {    // SetOption50 .. 81 = Settings.flag3
-      ptype = 3;
-      pindex = XdrvMailbox.index -50;      // 0 .. 31
-    }
-    else if (XdrvMailbox.index <= 113) {    // SetOption82 .. 113 = Settings.flag4
-      ptype = 4;
-      pindex = XdrvMailbox.index -82;      // 0 .. 31
-    }
-    else {                                 // SetOption114 .. 145 = Settings.flag5
-      ptype = 5;
-      pindex = XdrvMailbox.index -114;     // 0 .. 31
-    }
+  uint32_t ptype;
+  uint32_t pindex;
+  if (SetoptionDecode(XdrvMailbox.index, &ptype, &pindex)) {
 
     if (XdrvMailbox.payload >= 0) {
       if (1 == ptype) {                    // SetOption32 .. 49
@@ -2073,7 +2104,7 @@ void CmndDevGroupSend(void)
 {
   uint8_t device_group_index = (XdrvMailbox.usridx ? XdrvMailbox.index - 1 : 0);
   if (device_group_index < device_group_count) {
-    if (!_SendDeviceGroupMessage(device_group_index, (DevGroupMessageType)(DGR_MSGTYPE_UPDATE_COMMAND + DGR_MSGTYPFLAG_WITH_LOCAL))) {
+    if (!_SendDeviceGroupMessage(-device_group_index, (DevGroupMessageType)(DGR_MSGTYPE_UPDATE_COMMAND + DGR_MSGTYPFLAG_WITH_LOCAL))) {
       ResponseCmndChar(XdrvMailbox.data);
     }
   }
@@ -2092,6 +2123,16 @@ void CmndDevGroupShare(void)
 void CmndDevGroupStatus(void)
 {
   DeviceGroupStatus((XdrvMailbox.usridx ? XdrvMailbox.index - 1 : 0));
+}
+
+void CmndDevGroupTie(void)
+{
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_DEV_GROUP_NAMES)) {
+    if (XdrvMailbox.data_len > 0) {
+      Settings.device_group_tie[XdrvMailbox.index - 1] = XdrvMailbox.payload;
+    }
+    ResponseCmndIdxNumber(Settings.device_group_tie[XdrvMailbox.index - 1]);
+  }
 }
 #endif  // USE_DEVICE_GROUPS
 
