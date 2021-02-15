@@ -252,22 +252,59 @@ uint32_t ChrCount(const char *str, const char *delim) {
   return count;
 }
 
-// Function to return a substring defined by a delimiter at an index
-char* subStr(char* dest, char* str, const char *delim, int index)
-{
-  char *act;
-  char *sub = nullptr;
-  char *ptr;
-  int i;
+uint32_t ArgC(void) {
+  return (XdrvMailbox.data_len > 0) ? ChrCount(XdrvMailbox.data, ",") +1 : 0;
+}
 
-  // Since strtok consumes the first arg, make a copy
-  strncpy(dest, str, strlen(str)+1);
-  for (i = 1, act = dest; i <= index; i++, act = nullptr) {
-    sub = strtok_r(act, delim, &ptr);
-    if (sub == nullptr) break;
+// Function to return a substring defined by a delimiter at an index
+char* subStr(char* dest, char* str, const char *delim, int index) {
+  char* write = dest;
+  char* read = str;
+  char ch = '.';
+
+  while (index && (ch != '\0')) {
+    ch = *read++;
+    if (strchr(delim, ch)) {
+      index--;
+      if (index) { write = dest; }
+    } else {
+      *write++ = ch;
+    }
   }
-  sub = Trim(sub);
-  return sub;
+  *write = '\0';
+  dest = Trim(dest);
+  return dest;
+}
+
+char* ArgV(char* dest, int index) {
+  return subStr(dest, XdrvMailbox.data, ",", index);
+}
+
+uint32_t ArgVul(uint32_t *args, uint32_t count) {
+  uint32_t argc = ArgC();
+  if (argc > count) { argc = count; }
+  count = argc;
+  if (argc) {
+    char argument[XdrvMailbox.data_len];
+    for (uint32_t i = 0; i < argc; i++) {
+      if (strlen(ArgV(argument, i +1))) {
+        args[i] = strtoul(argument, nullptr, 0);
+      } else {
+        count--;
+      }
+    }
+  }
+  return count;
+}
+
+uint32_t ParseParameters(uint32_t count, uint32_t *params) {
+  // Destroys XdrvMailbox.data
+  char *p;
+  uint32_t i = 0;
+  for (char *str = strtok_r(XdrvMailbox.data, ", ", &p); str && i < count; str = strtok_r(nullptr, ", ", &p), i++) {
+    params[i] = strtoul(str, nullptr, 0);
+  }
+  return i;
 }
 
 float CharToFloat(const char *str)
@@ -620,16 +657,6 @@ bool ParseIPv4(uint32_t* addr, const char* str_p)
   return (3 == i);
 }
 
-uint32_t ParseParameters(uint32_t count, uint32_t *params)
-{
-  char *p;
-  uint32_t i = 0;
-  for (char *str = strtok_r(XdrvMailbox.data, ", ", &p); str && i < count; str = strtok_r(nullptr, ", ", &p), i++) {
-    params[i] = strtoul(str, nullptr, 0);
-  }
-  return i;
-}
-
 // Function to parse & check if version_str is newer than our currently installed version.
 bool NewerVersion(char* version_str)
 {
@@ -715,7 +742,11 @@ String GetDeviceHardware(void)
   }
 #endif  // ESP8266
 #ifdef ESP32
+#if CONFIG_IDF_TARGET_ESP32S2  // ESP32-S2
+  strcpy_P(buff, PSTR("ESP32-S2"));
+#else
   strcpy_P(buff, PSTR("ESP32"));
+#endif  // CONFIG_IDF_TARGET_ESP32S2
 #endif  // ESP32
   return String(buff);
 }
@@ -916,8 +947,8 @@ int GetCommandCode(char* destination, size_t destination_size, const char* needl
   return result;
 }
 
-bool DecodeCommand(const char* haystack, void (* const MyCommand[])(void))
-{
+bool DecodeCommand(const char* haystack, void (* const MyCommand[])(void), const uint8_t *synonyms = nullptr);
+bool DecodeCommand(const char* haystack, void (* const MyCommand[])(void), const uint8_t *synonyms) {
   GetTextIndexed(XdrvMailbox.command, CMDSZ, 0, haystack);  // Get prefix if available
   int prefix_length = strlen(XdrvMailbox.command);
   if (prefix_length) {
@@ -927,10 +958,18 @@ bool DecodeCommand(const char* haystack, void (* const MyCommand[])(void))
       return false;                                         // Prefix not in command
     }
   }
+  size_t syn_count = synonyms ? pgm_read_byte(synonyms) : 0;
   int command_code = GetCommandCode(XdrvMailbox.command + prefix_length, CMDSZ, XdrvMailbox.topic + prefix_length, haystack);
   if (command_code > 0) {                                   // Skip prefix
-    XdrvMailbox.command_code = command_code -1;
-    MyCommand[XdrvMailbox.command_code]();
+    if (command_code > syn_count) {
+      // We passed the synonyms zone, it's a regular command
+      XdrvMailbox.command_code = command_code - 1 - syn_count;
+      MyCommand[XdrvMailbox.command_code]();
+    } else {
+      // We have a SetOption synonym
+      XdrvMailbox.index = pgm_read_byte(synonyms + command_code);
+      CmndSetoptionBase(0);
+    }
     return true;
   }
   return false;
@@ -1211,28 +1250,14 @@ int ResponseAppendTime(void)
   return ResponseAppendTimeFormat(Settings.flag2.time_format);
 }
 
-// int ResponseAppendTHD(float f_temperature, float f_humidity)
-// {
-//   char temperature[FLOATSZ];
-//   dtostrfd(f_temperature, Settings.flag2.temperature_resolution, temperature);
-//   char humidity[FLOATSZ];
-//   dtostrfd(f_humidity, Settings.flag2.humidity_resolution, humidity);
-//   char dewpoint[FLOATSZ];
-//   dtostrfd(CalcTempHumToDew(f_temperature, f_humidity), Settings.flag2.temperature_resolution, dewpoint);
-
-//   return ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s,\"" D_JSON_DEWPOINT "\":%s"), temperature, humidity, dewpoint);
-// }
-
 int ResponseAppendTHD(float f_temperature, float f_humidity)
 {
   float dewpoint = CalcTempHumToDew(f_temperature, f_humidity);
-
   return ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "\":%*_f,\"" D_JSON_HUMIDITY "\":%*_f,\"" D_JSON_DEWPOINT "\":%*_f"),
                           Settings.flag2.temperature_resolution, &f_temperature,
                           Settings.flag2.humidity_resolution, &f_humidity,
                           Settings.flag2.temperature_resolution, &dewpoint);
 }
-
 
 int ResponseJsonEnd(void)
 {

@@ -161,6 +161,60 @@ int32_t EZ_RouteError(int32_t res, const SBuffer &buf) {
 }
 
 //
+// Handle EZSP Energy Scan result
+//
+int32_t EZSP_EnergyScanResult(int32_t res, const SBuffer &buf) {
+  uint8_t  channel = buf.get8(2);
+  int8_t   energy = buf.get8(3);
+
+  if ((channel >= USE_ZIGBEE_CHANNEL_MIN) && (channel <= USE_ZIGBEE_CHANNEL_MAX)) {
+    zigbee.energy[channel - USE_ZIGBEE_CHANNEL_MIN] = energy;
+  }
+  return -1;
+}
+//
+// Handle EZSP Energy Scan complete
+//
+int32_t EZSP_EnergyScanComplete(int32_t res, const SBuffer &buf) {
+  // uint8_t  channel = buf.get8(2);
+  uint8_t   status = buf.get8(3);
+
+  if (0 == status) {
+    EnergyScanResults();
+  }
+
+  return -1;
+}
+
+//
+// Dump energu scan results
+//
+void EnergyScanResults(void) {
+  Response_P(PSTR("{\"" D_JSON_ZIGBEE_SCAN "\":["));
+  for (uint32_t i = 0; i < USE_ZIGBEE_CHANNEL_COUNT; i++) {
+    int8_t energy = zigbee.energy[i];
+
+    if (i > 0) { ResponseAppend_P(PSTR(",")); }
+    ResponseAppend_P(PSTR("\"%d\":%d"), i + USE_ZIGBEE_CHANNEL_MIN, energy);
+
+    // display as log
+    static const int32_t bar_min = -87;
+    static const int32_t bar_max = 10;
+    static const uint32_t bar_count = 60;
+    char bar_str[bar_count + 1];
+    uint32_t energy_unsigned = energy + 0x80;
+
+    uint32_t bars = changeUIntScale(energy_unsigned, bar_min + 0x80, bar_max + 0x80, 0, bar_count);
+    for  (uint32_t j = 0; j < bars; j++) { bar_str[j] = '#'; }
+    bar_str[bars] = 0;
+    
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Channel %2d: %s"), i + USE_ZIGBEE_CHANNEL_MIN, bar_str);
+  }
+  ResponseAppend_P(PSTR("]}"));
+  MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
+}
+
+//
 // Handle a "permitJoining" incoming message
 //
 int32_t EZ_PermitJoinRsp(int32_t res, const SBuffer &buf) {
@@ -372,8 +426,8 @@ int32_t ZNP_Reboot(int32_t res, SBuffer &buf) {
 
   MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
 
-  if ((0x02 == major_rel) && (0x06 == minor_rel)) {
-  	return 0;	  // version 2.6.x is ok
+  if ((0x02 == major_rel) && ((0x06 == minor_rel) || (0x07 == minor_rel))) {
+  	return 0;	  // version 2.6.x and 2.7.x are ok
   } else {
     return ZIGBEE_LABEL_UNSUPPORTED_VERSION;  // abort
   }
@@ -403,8 +457,8 @@ int32_t ZNP_ReceiveCheckVersion(int32_t res, SBuffer &buf) {
 
   MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
 
-  if ((0x02 == major_rel) && (0x06 == minor_rel)) {
-  	return 0;	  // version 2.6.x is ok
+  if ((0x02 == major_rel) && ((0x06 == minor_rel) || (0x07 == minor_rel))) {
+  	return 0;	  // version 2.6.x and 2.7.x are ok
   } else {
     return ZIGBEE_LABEL_UNSUPPORTED_VERSION;  // abort
   }
@@ -1319,78 +1373,55 @@ void Z_SendSimpleDescReq(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluste
 //
 // Send AF Info Request
 // Queue requests for the device
-// 1. Request for 'ModelId' and 'Manufacturer': 0000/0005, 0000/0006
+// 1. Request for 'ModelId' and 'Manufacturer': 0000/0005, 0000/0004
 // 2. Auto-bind to coordinator:
 //    Iterate among
 //
 void Z_SendDeviceInfoRequest(uint16_t shortaddr) {
-  uint8_t endpoint = zigbee_devices.findFirstEndpoint(shortaddr);
-  if (0x00 == endpoint) { endpoint = 0x01; }    // if we don't know the endpoint, try 0x01
-  uint8_t transacid = zigbee_devices.getNextSeqNumber(shortaddr);
-
-  uint8_t InfoReq[] = { 0x04, 0x00, 0x05, 0x00 };
-
-  ZigbeeZCLSend_Raw(ZigbeeZCLSendMessage({
-    shortaddr,
-    0x0000, /* group */
-    0x0000 /*cluster*/,
-    endpoint,
-    ZCL_READ_ATTRIBUTES,
-    0x0000,  /* manuf */
-    false /* not cluster specific */,
-    true /* response */,
-      false /* discover route */,
-    transacid,  /* zcl transaction id */
-    InfoReq, sizeof(InfoReq)
-  }));
+  ZCLMessage zcl(4);   // message is 4 bytes
+  zcl.shortaddr = shortaddr;
+  zcl.cluster = 0;
+  zcl.cmd = ZCL_READ_ATTRIBUTES;
+  zcl.clusterSpecific = false;
+  zcl.needResponse = true;
+  zcl.direct = false;   // discover route
+  zcl.buf.add16(0x0005);
+  zcl.buf.add16(0x0004);
+  zigbeeZCLSendCmd(zcl);
 }
 
 //
 // Send single attribute read request in Timer
 //
 void Z_SendSingleAttributeRead(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
-  uint8_t transacid = zigbee_devices.getNextSeqNumber(shortaddr);
-  uint8_t InfoReq[2] = { Z_B0(value), Z_B1(value) };    // list of single attribute
-
-  ZigbeeZCLSend_Raw(ZigbeeZCLSendMessage({
-    shortaddr,
-    0x0000, /* group */
-    cluster /*cluster*/,
-    endpoint,
-    ZCL_READ_ATTRIBUTES,
-    0x0000,  /* manuf */
-    false /* not cluster specific */,
-    true /* response */,
-      false /* discover route */,
-    transacid,  /* zcl transaction id */
-    InfoReq, sizeof(InfoReq)
-  }));
+  ZCLMessage zcl(2);   // message is 2 bytes
+  zcl.shortaddr = shortaddr;
+  zcl.cluster = cluster;
+  zcl.endpoint = endpoint;
+  zcl.cmd = ZCL_READ_ATTRIBUTES;
+  zcl.clusterSpecific = false;
+  zcl.needResponse = true;
+  zcl.direct = false;   // discover route
+  zcl.buf.add16(value);    // 04000500
+  zigbeeZCLSendCmd(zcl);
 }
 
 //
 // Write CIE address
 //
 void Z_WriteCIEAddress(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
-  uint8_t transacid = zigbee_devices.getNextSeqNumber(shortaddr);
-  SBuffer buf(12);
-  buf.add16(0x0010);    // attribute 0x0010
-  buf.add8(ZEUI64);
-  buf.add64(localIEEEAddr);
-
-  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Writing CIE address"));
-  ZigbeeZCLSend_Raw(ZigbeeZCLSendMessage({
-    shortaddr,
-    0x0000, /* group */
-    0x0500 /*cluster*/,
-    endpoint,
-    ZCL_WRITE_ATTRIBUTES,
-    0x0000,  /* manuf */
-    false /* not cluster specific */,
-    true /* response */,
-    false /* discover route */,
-    transacid,  /* zcl transaction id */
-    buf.getBuffer(), buf.len()
-  }));
+  ZCLMessage zcl(12);   // message is 12 bytes
+  zcl.shortaddr = shortaddr;
+  zcl.cluster = 0x0500;
+  zcl.endpoint = endpoint;
+  zcl.cmd = ZCL_WRITE_ATTRIBUTES;
+  zcl.clusterSpecific = false;
+  zcl.needResponse = true;
+  zcl.direct = false;   // discover route
+  zcl.buf.add16(0x0010);    // attribute 0x0010
+  zcl.buf.add8(ZEUI64);
+  zcl.buf.add64(localIEEEAddr);
+  zigbeeZCLSendCmd(zcl);
 }
 
 
@@ -1398,23 +1429,18 @@ void Z_WriteCIEAddress(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster,
 // Write CIE address
 //
 void Z_SendCIEZoneEnrollResponse(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
-  uint8_t transacid = zigbee_devices.getNextSeqNumber(shortaddr);
-  uint8_t EnrollRSP[2] = { 0x00 /* Sucess */, Z_B0(value) /* ZoneID */ };
-
   AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Sending Enroll Zone %d"), Z_B0(value));
-  ZigbeeZCLSend_Raw(ZigbeeZCLSendMessage({
-    shortaddr,
-    0x0000, /* group */
-    0x0500 /*cluster*/,
-    endpoint,
-    0x00,   // Zone Enroll Response
-    0x0000,  /* manuf */
-    true /* cluster specific */,
-    true /* response */,
-    false /* discover route */,
-    transacid,  /* zcl transaction id */
-    EnrollRSP, sizeof(EnrollRSP)
-  }));
+  ZCLMessage zcl(2);   // message is 2 bytes
+  zcl.shortaddr = shortaddr;
+  zcl.cluster = 0x0500;
+  zcl.endpoint = endpoint;
+  zcl.cmd = 0x00,   // Zone Enroll Response
+  zcl.clusterSpecific = true;
+  zcl.needResponse = true;
+  zcl.direct = false;   // discover route
+  zcl.buf.add8(0x00);   // success
+  zcl.buf.add8(Z_B0(value)); // ZoneID
+  zigbeeZCLSendCmd(zcl);
 }
 
 //
@@ -1549,19 +1575,16 @@ void Z_AutoConfigReportingForCluster(uint16_t shortaddr, uint16_t groupaddr, uin
 
   if (buf.len() > 0) {
     AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "auto-bind `%s`"), TasmotaGlobal.mqtt_data);
-    ZigbeeZCLSend_Raw(ZigbeeZCLSendMessage({
-      shortaddr,
-      0x0000, /* group */
-      cluster /*cluster*/,
-      endpoint,
-      ZCL_CONFIGURE_REPORTING,
-      0x0000,  /* manuf */
-      false /* not cluster specific */,
-      false /* no response */,
-      false /* discover route */,
-      zigbee_devices.getNextSeqNumber(shortaddr),  /* zcl transaction id */
-      buf.buf(), buf.len()
-    }));
+    ZCLMessage zcl(buf.len());   // message is 4 bytes
+    zcl.shortaddr = shortaddr;
+    zcl.cluster = cluster;
+    zcl.endpoint = endpoint;
+    zcl.cmd = ZCL_CONFIGURE_REPORTING;
+    zcl.clusterSpecific = false;  /* not cluster specific */
+    zcl.needResponse = false;     /* noresponse */
+    zcl.direct = false;           /* discover route */
+    zcl.buf.addBuffer(buf);
+    zigbeeZCLSendCmd(zcl);
   }
 }
 
@@ -1848,19 +1871,18 @@ int32_t EZ_Recv_Default(int32_t res, const SBuffer &buf) {
     switch (ezsp_command_index) {
       case EZSP_incomingMessageHandler:
         return EZ_IncomingMessage(res, buf);
-        break;
       case EZSP_trustCenterJoinHandler:
         return EZ_ReceiveTCJoinHandler(res, buf);
-        break;
       case EZSP_incomingRouteErrorHandler:
         return EZ_RouteError(res, buf);
-        break;
       case EZSP_permitJoining:
         return EZ_PermitJoinRsp(res, buf);
-        break;
       case EZSP_messageSentHandler:
         return EZ_MessageSent(res, buf);
-        break;
+      case EZSP_energyScanResultHandler:
+        return EZSP_EnergyScanResult(res, buf);
+      case EZSP_scanCompleteHandler:
+        return EZSP_EnergyScanComplete(res, buf);
     }
     return -1;
   }
@@ -2149,19 +2171,17 @@ void ZCLFrame::autoResponder(const uint16_t *attr_list_ids, size_t attr_len) {
 
     // send
     // all good, send the packet
-    ZigbeeZCLSend_Raw(ZigbeeZCLSendMessage({
-      _srcaddr,
-      0x0000,
-      _cluster_id /*cluster*/,
-      _srcendpoint,
-      ZCL_READ_ATTRIBUTES_RESPONSE,
-      0x0000,  /* manuf */
-      false /* not cluster specific */,
-      false /* no response */,
-      true /* direct response */,
-      _transact_seq,  /* zcl transaction id */
-      buf.getBuffer(), buf.len()
-    }));
+    ZCLMessage zcl(buf.len());   // message is 4 bytes
+    zcl.shortaddr = _srcaddr;
+    zcl.cluster = _cluster_id;
+    zcl.endpoint = _srcendpoint;
+    zcl.cmd = ZCL_READ_ATTRIBUTES_RESPONSE;
+    zcl.clusterSpecific = false;  /* not cluster specific */
+    zcl.needResponse = false;     /* noresponse */
+    zcl.direct = true;            /* direct response */
+    zcl.setTransac(_transact_seq);
+    zcl.buf.addBuffer(buf);
+    zigbeeZCLSendCmd(zcl);
   }
 }
 

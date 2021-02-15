@@ -1303,7 +1303,7 @@ void TuyaSensorsShow(bool json)
       if (TuyaGetDpId(sensor) != 0) {
         switch (sensor) {
           case 71:
-            WSContentSend_PD(HTTP_SNS_TEMP, "", dtostrfd(Tuya.Sensors[0], Settings.flag2.temperature_resolution, tempval), TempUnit());
+            WSContentSend_Temp("", Tuya.Sensors[0]);
             break;
           case 72:
             WSContentSend_PD(PSTR("{s}" D_TEMPERATURE " Set{m}%s " D_UNIT_DEGREE "%c{e}"),
@@ -1336,6 +1336,10 @@ void TuyaSensorsShow(bool json)
             break;
         }
       }
+      if (AsModuleTuyaMS()) {
+        WSContentSend_P(PSTR("{s}" D_JSON_IRHVAC_MODE "{m}%d{e}"), Tuya.ModeSet);
+      }
+
   #endif  // USE_WEBSERVER
     }
   }

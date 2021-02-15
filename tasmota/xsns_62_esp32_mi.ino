@@ -1,5 +1,7 @@
 /*
-  xsns_62_MI_ESP32.ino - MI-BLE-sensors via ESP32 support for Tasmota
+  xsns_62_esp32_mi.ino - MI-BLE-sensors via ESP32 support for Tasmota
+  enabled by ESP32 && !USE_BLE_ESP32
+  if (ESP32 && USE_BLE_ESP32) then xsns_62_esp32_mi_ble.ino is used
 
   Copyright (C) 2021  Christian Baars and Theo Arends
 
@@ -47,6 +49,7 @@
 */
 #ifndef USE_BLE_ESP32
 #ifdef ESP32                       // ESP32 only. Use define USE_HM10 for ESP8266 support
+#if CONFIG_IDF_TARGET_ESP32
 
 #ifdef USE_MI_ESP32
 
@@ -786,12 +789,14 @@ void MI32PreInit(void) {
 void MI32Init(void) {
   if (MI32.mode.init) { return; }
 
-  if (TasmotaGlobal.global_state.wifi_down) { return; }
+  if (TasmotaGlobal.global_state.wifi_down && TasmotaGlobal.global_state.eth_down) { return; }
 
-  TasmotaGlobal.wifi_stay_asleep = true;
-  if (WiFi.getSleep() == false) {
-    AddLog(LOG_LEVEL_DEBUG,PSTR("M32: Put WiFi modem in sleep mode"));
-    WiFi.setSleep(true); // Sleep
+  if (!TasmotaGlobal.global_state.wifi_down) {
+    TasmotaGlobal.wifi_stay_asleep = true;
+    if (WiFi.getSleep() == false) {
+      AddLog(LOG_LEVEL_DEBUG,PSTR("M32: Put WiFi modem in sleep mode"));
+      WiFi.setSleep(true); // Sleep
+    }
   }
 
   if (!MI32.mode.init) {
@@ -2052,9 +2057,8 @@ void MI32Show(bool json)
               ||(hass_mode!=-1)
 #endif //USE_HOME_ASSISTANT
             ) {
-              char temperature[FLOATSZ];
-              dtostrfd(MIBLEsensors[i].temp, Settings.flag2.temperature_resolution, temperature);
-              ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE "\":%s"), temperature);
+              ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE "\":%*_f"),
+                Settings.flag2.temperature_resolution, &MIBLEsensors[i].temp);
             }
           }
         }
@@ -2211,9 +2215,7 @@ void MI32Show(bool json)
         WSContentSend_PD(HTTP_RSSI, kMI32DeviceType[MIBLEsensors[i].type-1], MIBLEsensors[i].RSSI);
         if (MIBLEsensors[i].type==FLORA) {
           if (!isnan(MIBLEsensors[i].temp)) {
-            char temperature[FLOATSZ];
-            dtostrfd(MIBLEsensors[i].temp, Settings.flag2.temperature_resolution, temperature);
-            WSContentSend_PD(HTTP_SNS_TEMP, kMI32DeviceType[MIBLEsensors[i].type-1], temperature, TempUnit());
+            WSContentSend_Temp(kMI32DeviceType[MIBLEsensors[i].type-1], MIBLEsensors[i].temp);
           }
           if (MIBLEsensors[i].moisture!=0xff) {
             WSContentSend_PD(HTTP_SNS_MOISTURE, kMI32DeviceType[MIBLEsensors[i].type-1], MIBLEsensors[i].moisture);
@@ -2319,5 +2321,6 @@ bool Xsns62(uint8_t function)
   return result;
 }
 #endif  // USE_MI_ESP32
+#endif  // CONFIG_IDF_TARGET_ESP32
 #endif  // ESP32
 #endif  // USE_BLE_ESP32
