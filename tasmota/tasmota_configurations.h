@@ -178,6 +178,9 @@
 //#define USE_TASMOTA_CLIENT                       // Add support for Arduino Uno/Pro Mini via serial interface including flashing (+2k3 code, 44 mem)
 //#define USE_OPENTHERM                            // Add support for OpenTherm (+15k code)
 //#define USE_MIEL_HVAC                            // Add support for Mitsubishi Electric HVAC serial interface (+5k code)
+//#define USE_PROJECTOR_CTRL                       // Add support for LCD/DLP Projector serial control interface (+2k code)
+//  #define USE_PROJECTOR_CTRL_NEC                 // Use codes for NEC
+//  #define USE_PROJECTOR_CTRL_OPTOMA              // Use codes for OPTOMA
 //#define USE_AS608                                // Add support for AS608 optical and R503 capacitive fingerprint sensor (+3k4 code)
 
 #define USE_ENERGY_SENSOR                        // Add energy sensors (-14k code)
@@ -301,25 +304,26 @@
 #undef USE_BLE_ESP32                             // (ESP32 only) Disable support for native BLE on ESP32 - use new driver
 #undef USE_MI_ESP32                              // (ESP32 only) Disable support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
 
+#define USE_DISPLAY                              // Add Display Support (+2k code)
+  #define USE_DISPLAY_TM1637                     // [DisplayModel 15] Enable TM1637 module
 
 #define USE_I2C                                  // I2C using library wire (+10k code, 0k2 mem, 124 iram)
-  #define USE_DISPLAY                            // Add I2C Display Support (+2k code)
-    #define USE_DISPLAY_MODES1TO5                // Enable display mode 1 to 5 in addition to mode 0
-    #define USE_DISPLAY_LCD                      // [DisplayModel 1] Enable Lcd display (I2C addresses 0x27 and 0x3F) (+6k code)
-    #define USE_DISPLAY_SSD1306                  // [DisplayModel 2] Enable SSD1306 Oled 128x64 display (I2C addresses 0x3C and 0x3D) (+16k code)
-    #define USE_DISPLAY_MATRIX                   // [DisplayModel 3] Enable 8x8 Matrix display (I2C adresseses see below) (+11k code)
-    #define USE_DISPLAY_SEVENSEG                 // [DisplayModel 11] [I2cDriver47] Enable sevenseg display (I2C addresses 0x70 - 0x77) (<+11k code)
-    #define USE_DISPLAY_SH1106                   // [DisplayModel 7] Enable SH1106 Oled 128x64 display (I2C addresses 0x3C and 0x3D)
+  #define USE_DISPLAY_MODES1TO5                  // Enable display mode 1 to 5 in addition to mode 0
+  #define USE_DISPLAY_LCD                        // [DisplayModel 1] Enable Lcd display (I2C addresses 0x27 and 0x3F) (+6k code)
+  #define USE_DISPLAY_SSD1306                    // [DisplayModel 2] Enable SSD1306 Oled 128x64 display (I2C addresses 0x3C and 0x3D) (+16k code)
+  #define USE_DISPLAY_MATRIX                     // [DisplayModel 3] Enable 8x8 Matrix display (I2C adresseses see below) (+11k code)
+  #define USE_DISPLAY_SEVENSEG                   // [DisplayModel 11] [I2cDriver47] Enable sevenseg display (I2C addresses 0x70 - 0x77) (<+11k code)
+  #define USE_DISPLAY_SH1106                     // [DisplayModel 7] Enable SH1106 Oled 128x64 display (I2C addresses 0x3C and 0x3D)
 
 #define USE_SPI                                  // Hardware SPI using GPIO12(MISO), GPIO13(MOSI) and GPIO14(CLK) in addition to two user selectable GPIOs(CS and DC)
-    #define USE_DISPLAY_ILI9341                  // [DisplayModel 4] Enable ILI9341 Tft 480x320 display (+19k code)
-    #define USE_DISPLAY_EPAPER_29                // [DisplayModel 5] Enable e-paper 2.9 inch display (+19k code)
-    #define USE_DISPLAY_EPAPER_42                // [DisplayModel 6] Enable e-paper 4.2 inch display
-    #define USE_DISPLAY_ILI9488                  // [DisplayModel 8]
-    #define USE_DISPLAY_SSD1351                  // [DisplayModel 9]
-    #define USE_DISPLAY_RA8876                   // [DisplayModel 10]
-    #define USE_DISPLAY_ST7789                   // [DisplayModel 12] Enable ST7789 module
-    #define USE_DISPLAY_SSD1331                  // [DisplayModel 14] Enable SSD1331 module
+  #define USE_DISPLAY_ILI9341                    // [DisplayModel 4] Enable ILI9341 Tft 480x320 display (+19k code)
+  #define USE_DISPLAY_EPAPER_29                  // [DisplayModel 5] Enable e-paper 2.9 inch display (+19k code)
+  #define USE_DISPLAY_EPAPER_42                  // [DisplayModel 6] Enable e-paper 4.2 inch display
+  #define USE_DISPLAY_ILI9488                    // [DisplayModel 8]
+  #define USE_DISPLAY_SSD1351                    // [DisplayModel 9]
+  #define USE_DISPLAY_RA8876                     // [DisplayModel 10]
+  #define USE_DISPLAY_ST7789                     // [DisplayModel 12] Enable ST7789 module
+  #define USE_DISPLAY_SSD1331                    // [DisplayModel 14] Enable SSD1331 module
 
 #undef DEBUG_THEO                                // Disable debug code
 #undef USE_DEBUG_DRIVER                          // Disable debug code
@@ -430,6 +434,7 @@
 #undef USE_TASMOTA_CLIENT                        // Disable support for Arduino Uno/Pro Mini via serial interface including flashing (+2k3 code, 44 mem)
 #undef USE_OPENTHERM                             // Disable support for OpenTherm (+15k code)
 #undef USE_MIEL_HVAC                             // Disable support for Mitsubishi Electric HVAC serial interface (+5k code)
+#undef USE_PROJECTOR_CTRL                        // Disable support for LCD/DLP Projector serial control interface
 
 #undef USE_DHT                                   // Disable support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
 #undef USE_MAX31855                              // Disable MAX31855 K-Type thermocouple sensor using softSPI
@@ -559,6 +564,7 @@
 #undef USE_TASMOTA_CLIENT                        // Disable support for Arduino Uno/Pro Mini via serial interface including flashing (+2k3 code, 44 mem)
 #undef USE_OPENTHERM                             // Disable support for OpenTherm (+15k code)
 #undef USE_MIEL_HVAC                             // Disable support for Mitsubishi Electric HVAC serial interface (+5k code)
+#undef USE_PROJECTOR_CTRL                        // Disable support for LCD/DLP Projector serial control interface
 
 #undef USE_ENERGY_SENSOR                         // Disable energy sensors
 #undef USE_ADE7953                               // Disable ADE7953 Energy monitor as used on Shelly 2.5 (I2C address 0x38) (+1k5)
@@ -698,6 +704,7 @@
 #undef USE_TASMOTA_CLIENT                        // Disable support for Arduino Uno/Pro Mini via serial interface including flashing (+2k3 code, 44 mem)
 #undef USE_OPENTHERM                             // Disable support for OpenTherm (+15k code)
 #undef USE_MIEL_HVAC                             // Disable support for Mitsubishi Electric HVAC serial interface (+5k code)
+#undef USE_PROJECTOR_CTRL                        // Disable support for LCD/DLP Projector serial control interface
 
 //#undef USE_ENERGY_SENSOR                         // Disable energy sensors
 #undef USE_PZEM004T                              // Disable PZEM004T energy sensor
@@ -840,6 +847,7 @@
 #undef USE_TASMOTA_CLIENT                        // Disable support for Arduino Uno/Pro Mini via serial interface including flashing (+2k3 code, 44 mem)
 #undef USE_OPENTHERM                             // Disable support for OpenTherm (+15k code)
 #undef USE_MIEL_HVAC                             // Disable support for Mitsubishi Electric HVAC serial interface (+5k code)
+#undef USE_PROJECTOR_CTRL                        // Disable support for LCD/DLP Projector serial control interface
 #undef USE_AS608                                 // Disable support for AS608 optical and R503 capacitive fingerprint sensor (+3k4 code)
 
 #undef USE_ENERGY_SENSOR                         // Disable energy sensors

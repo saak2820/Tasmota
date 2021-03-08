@@ -172,6 +172,7 @@
 | USE_TASMOTA_CLIENT    | - | - | - | - | - | - | - |
 | USE_OPENTHERM         | - | - | - | - | - | - | - |
 | USE_MIEL_HVAC         | - | - | - | - | - | - | - |
+| USE_PROJECTOR_CTRL    | - | - | - | - | - | - | - |
 | USE_AS608             | - | - | - | - | - | - | - |
 | USE_TCP_BRIDGE        | - | - | - | - | - | - | - | zbbridge
 |                       |   |   |   |   |   |   |   |
@@ -210,6 +211,7 @@
 | USE_DISPLAY_SSD1351   | - | - | - | - | - | - | x |
 | USE_DISPLAY_RA8876    | - | - | - | - | - | - | x |
 | USE_DISPLAY_ST7789    | - | - | - | - | - | - | x |
+| USE_DISPLAY_TM1637    | - | - | - | - | - | - | x |
 |                       |   |   |   |   |   |   |   |
 | USE_FT5206            | - | - | - | - | - | - | - |
 | USE_FTC532            | - | - | - | - | - | - | - |

@@ -380,6 +380,8 @@
 #define D_CMND_SWITCHRETAIN "SwitchRetain"
 #define D_CMND_POWERRETAIN "PowerRetain"
 #define D_CMND_SENSORRETAIN "SensorRetain"
+#define D_CMND_INFORETAIN "InfoRetain"
+#define D_CMND_STATERETAIN "StateRetain"
 #define D_CMND_PUBLISH "Publish"
 
 // Commands xdrv_01_webserver.ino
@@ -434,7 +436,6 @@
 #define D_SO_POWERONFADE "PowerOnFade"      // SO91
 #define D_SO_PWMCT "PWMCT"                  // SO92
 #define D_SO_WHITEBLEND "WhiteBlend"        // SO105
-#define D_SO_VIRTUALCT "VirtualCT"          // SO106
 #define D_CMND_CHANNEL "Channel"
 #define D_CMND_COLOR "Color"
 #define D_CMND_COLORTEMPERATURE "CT"
@@ -550,7 +551,7 @@
 #define D_CMND_ZIGBEE_PERMITJOIN "PermitJoin"
 #define D_CMND_ZIGBEE_STATUS "Status"
 #define D_CMND_ZIGBEE_RESET "Reset"
-  #define D_JSON_ZIGBEE_CC2530 "CC2530"
+  #define D_JSON_ZIGBEE_CC2530 "CCxxxx"
   #define D_JSON_ZIGBEE_EZSP "EZSP"
 #define D_CMND_ZIGBEEZNPRECEIVE "ZNPReceive"      // only for debug
 #define D_CMND_ZIGBEE_EZSP_RECEIVE "EZSPReceive"      // only for debug
@@ -663,6 +664,7 @@
 #define D_CMND_SHUTTER_ENABLEENDSTOPTIME "EnableEndStopTime"
 #define D_CMND_SHUTTER_INVERTWEBBUTTONS "InvertWebButtons"
 #define D_CMND_SHUTTER_PWMRANGE "PWMRange"
+#define D_CMND_SHUTTER_UNITTEST "UnitTest"
 
 // Commands xdrv_32_hotplug.ino
 #define D_CMND_HOTPLUG "HotPlug"
@@ -831,7 +833,7 @@ const char HTTP_SNS_EC[]            PROGMEM = "{s}%s "  D_EC                  "{
 const char HTTP_SNS_O2[]            PROGMEM = "{s}%s "  D_O2                  "{m}%s " D_UNIT_PERCENT             "{e}";
 const char HTTP_SNS_LITERS[]        PROGMEM = "{s}%s "  D_VOLUME              "{m}%s " D_UNIT_LITERS              "{e}";
 const char HTTP_SNS_LPM[]           PROGMEM = "{s}%s "  D_FLOW_RATE           "{m}%s " D_UNIT_LITERS_PER_MIN      "{e}";
-const char HTTP_SNS_DO[]            PROGMEM = "{s}%s "  D_DO                  "{m}%s " D_UNIT_PARTS_PER_MILLION   "{e}";
+const char HTTP_SNS_DO[]            PROGMEM = "{s}%s "  D_DO                  "{m}%s " D_UNIT_MILIGRAMS_PER_LITER "{e}";
 const char HTTP_SNS_COLOR_RED[]     PROGMEM = "{s}%s "  D_COLOR_RED           "{m}%u "                            "{e}";
 const char HTTP_SNS_COLOR_GREEN[]   PROGMEM = "{s}%s "  D_COLOR_GREEN         "{m}%u "                            "{e}";
 const char HTTP_SNS_COLOR_BLUE[]    PROGMEM = "{s}%s "  D_COLOR_BLUE          "{m}%u "                            "{e}";

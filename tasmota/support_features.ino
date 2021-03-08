@@ -715,8 +715,12 @@ void ResponseAppendFeatures(void)
 #if defined(USE_ENERGY_SENSOR) && defined(USE_SDM72)
     feature7 |= 0x20000000;  // xnrg_18_sdm72.ino
 #endif
-//    feature7 |= 0x40000000;
-//    feature7 |= 0x80000000;
+#if defined(USE_DISPLAY) && defined(USE_DISPLAY_TM1637)
+    feature7 |= 0x40000000;
+#endif
+#ifdef USE_PROJECTOR_CTRL
+    feature7 |= 0x80000000;  // xdrv_53_projector_ctrl.ino
+#endif
   }
 
   static uint32_t feature8 = 0x00000000;

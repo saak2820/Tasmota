@@ -131,7 +131,7 @@ const uint8_t LIGHT_COLOR_SIZE = 25;   // Char array scolor size
 const char kLightCommands[] PROGMEM = "|"  // No prefix
   // SetOptions synonyms
   D_SO_CHANNELREMAP "|" D_SO_MULTIPWM "|" D_SO_ALEXACTRANGE "|" D_SO_POWERONFADE "|" D_SO_PWMCT "|"
-  D_SO_WHITEBLEND "|" D_SO_VIRTUALCT "|"
+  D_SO_WHITEBLEND "|"
   // Other commands
   D_CMND_COLOR "|" D_CMND_COLORTEMPERATURE "|" D_CMND_DIMMER "|" D_CMND_DIMMER_RANGE "|" D_CMND_DIMMER_STEP "|" D_CMND_LEDTABLE "|" D_CMND_FADE "|"
   D_CMND_RGBWWTABLE "|" D_CMND_SCHEME "|" D_CMND_SPEED "|" D_CMND_WAKEUP "|" D_CMND_WAKEUPDURATION "|"
@@ -150,7 +150,7 @@ const char kLightCommands[] PROGMEM = "|"  // No prefix
 
 SO_SYNONYMS(kLightSynonyms,
   37, 68, 82, 91, 92,
-  105, 106,
+  105,
 );
 
 void (* const LightCommand[])(void) PROGMEM = {
@@ -505,9 +505,6 @@ class LightStateClass {
       uint8_t prev_bri = _briRGB;
       _briRGB = bri_rgb;
       if (bri_rgb > 0) { addRGBMode(); }
-#ifdef USE_PWM_DIMMER
-      if (PWM_DIMMER == TasmotaGlobal.module_type) PWMDimmerSetBrightnessLeds(-1);
-#endif  // USE_PWM_DIMMER
       return prev_bri;
     }
 
@@ -516,9 +513,6 @@ class LightStateClass {
       uint8_t prev_bri = _briCT;
       _briCT = bri_ct;
       if (bri_ct > 0) { addCTMode(); }
-#ifdef USE_PWM_DIMMER
-      if (PWM_DIMMER == TasmotaGlobal.module_type) PWMDimmerSetBrightnessLeds(-1);
-#endif  // USE_PWM_DIMMER
       return prev_bri;
     }
 
@@ -1089,6 +1083,13 @@ void LightCalcPWMRange(void) {
   //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("LightCalcPWMRange %d %d - %d %d"), Settings.dimmer_hw_min, Settings.dimmer_hw_max, Light.pwm_min, Light.pwm_max);
 }
 
+void LightSetScheme(uint32_t scheme) {
+  if (!scheme && Settings.light_scheme) {
+    Light.update = true;
+  }
+  Settings.light_scheme = scheme;
+}
+
 void LightInit(void)
 {
   // move white blend mode from deprecated `RGBWWTable` to `SetOption105`
@@ -1155,7 +1156,7 @@ void LightInit(void)
     max_scheme = LS_POWER;
   }
   if ((LS_WAKEUP == Settings.light_scheme) || (Settings.light_scheme > max_scheme)) {
-    Settings.light_scheme = LS_POWER;
+    LightSetScheme(LS_POWER);
   }
   Light.power = 0;
   Light.update = true;
@@ -1314,7 +1315,7 @@ void LightSetSignal(uint16_t lo, uint16_t hi, uint16_t value)
     uint16_t signal = changeUIntScale(value, lo, hi, 0, 255);  // 0..255
 //    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Light signal %d"), signal);
     light_controller.changeRGB(signal, 255 - signal, 0, true);  // keep bri
-    Settings.light_scheme = 0;
+    LightSetScheme(LS_POWER);
     if (0 == light_state.getBri()) {
       light_controller.changeBri(50);
     }
@@ -1674,7 +1675,7 @@ void LightAnimate(void)
             MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_CMND_WAKEUP));
 
             Light.wakeup_active = 0;
-            Settings.light_scheme = LS_POWER;
+            LightSetScheme(LS_POWER);
           }
         }
         break;
@@ -1958,6 +1959,10 @@ void LightSetOutputs(const uint16_t *cur_col_10) {
         if (!Settings.flag4.zerocross_dimmer) {
           analogWrite(Pin(GPIO_PWM1, i), bitRead(TasmotaGlobal.pwm_inverted, i) ? Settings.pwm_range - cur_col : cur_col);
         }
+#ifdef USE_PWM_DIMMER
+        // Animate brightness LEDs to follow PWM dimmer brightness
+        if (PWM_DIMMER == TasmotaGlobal.module_type) PWMDimmerSetBrightnessLeds(change10to8(cur_col));
+#endif  // USE_PWM_DIMMER
       }
     }
   }
@@ -2290,7 +2295,7 @@ void LightHandleDevGroupItem(void)
         uint32_t old_bri = light_state.getBri();
         light_controller.changeChannels(Light.entry_color);
         light_controller.changeBri(old_bri);
-        Settings.light_scheme = 0;
+        LightSetScheme(LS_POWER);
         if (!restore_power && !Light.power) {
           Light.old_power = Light.power;
           Light.power = 0xff;
@@ -2450,7 +2455,7 @@ void CmndSupportColor(void)
 #ifdef USE_LIGHT_PALETTE
         }
 #endif  // USE_LIGHT_PALETTE
-        Settings.light_scheme = 0;
+        LightSetScheme(LS_POWER);
         coldim = true;
       } else {             // Color3, 4, 5 and 6
         for (uint32_t i = 0; i < LST_RGB; i++) {
@@ -2619,7 +2624,7 @@ void CmndScheme(void)
         Light.wheel--;
 #endif  // USE_LIGHT_PALETTE
       }
-      Settings.light_scheme = XdrvMailbox.payload;
+      LightSetScheme(XdrvMailbox.payload);
       if (LS_WAKEUP == Settings.light_scheme) {
         Light.wakeup_active = 3;
       }
@@ -2642,7 +2647,7 @@ void CmndWakeup(void)
     light_controller.changeDimmer(XdrvMailbox.payload);
   }
   Light.wakeup_active = 3;
-  Settings.light_scheme = LS_WAKEUP;
+  LightSetScheme(LS_WAKEUP);
   LightPowerOn();
   ResponseCmndChar(PSTR(D_JSON_STARTED));
 }
@@ -2855,6 +2860,7 @@ void CmndFade(void)
 void CmndSpeed(void)
 {
   if (2 == XdrvMailbox.index) {
+    // Speed2 setting will be used only once, then revert to fade/speed
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 40)) {
       Light.fade_once_enabled = true;
       Light.fade_once_value = (XdrvMailbox.payload > 0);
@@ -2862,7 +2868,7 @@ void CmndSpeed(void)
       Light.speed_once_value = XdrvMailbox.payload;
       if (!Light.fade_once_value) { Light.fade_running = false; }
     }
-    ResponseCmndNumber(Light.speed_once_value);
+    ResponseCmndIdxNumber(Light.speed_once_value);
   } else {
     // Speed 1  - Fast
     // Speed 40 - Very slow

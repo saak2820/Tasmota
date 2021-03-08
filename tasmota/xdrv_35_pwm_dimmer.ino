@@ -167,6 +167,7 @@ void PWMDimmerSetBrightnessLeds(int32_t bri)
     uint32_t level = 0;
     led = -1;
     mask = 0;
+    uint16_t pwm_led_bri = 0;
     for (uint32_t count = 0; count < leds; count++) {
       level += step;
       for (;;) {
@@ -175,7 +176,8 @@ void PWMDimmerSetBrightnessLeds(int32_t bri)
         if (!mask) mask = 1;
         if (Settings.ledmask & mask) break;
       }
-      SetLedPowerIdx(led, bri >= level);
+      pwm_led_bri = changeUIntScale((bri > level ? bri - level : 0), 0, step, 0, Settings.pwm_range);
+      analogWrite(Pin(GPIO_LED1, led), bitRead(TasmotaGlobal.led_inverted, led) ? Settings.pwm_range - pwm_led_bri : pwm_led_bri);
     }
   }
 }
@@ -193,7 +195,6 @@ void PWMDimmerSetPoweredOffLed(void)
 void PWMDimmerSetPower(void)
 {
   DigitalWrite(GPIO_REL1, 0, bitRead(TasmotaGlobal.rel_inverted, 0) ? !TasmotaGlobal.power : TasmotaGlobal.power);
-  PWMDimmerSetBrightnessLeds(-1);
   PWMDimmerSetPoweredOffLed();
 }
 
@@ -491,7 +492,7 @@ void PWMDimmerHandleButton(uint32_t button_index, bool pressed)
   }
 
   // If we need to adjust the brightness, do it.
-  uint32_t negated_device_group_index = -power_button_index;
+  int32_t negated_device_group_index = -power_button_index;
   if (bri_offset) {
     int32_t bri;
 #ifdef USE_PWM_DIMMER_REMOTE
@@ -510,7 +511,7 @@ void PWMDimmerHandleButton(uint32_t button_index, bool pressed)
     }
     if (new_bri != bri) {
 #ifdef USE_DEVICE_GROUPS
-      SendDeviceGroupMessage(negated_device_group_index, (dgr_more_to_come ? DGR_MSGTYP_UPDATE_MORE_TO_COME : DGR_MSGTYP_UPDATE_DIRECT), DGR_ITEM_LIGHT_BRI, new_bri);
+      SendDeviceGroupMessage(negated_device_group_index, (dgr_more_to_come ? DGR_MSGTYP_UPDATE_MORE_TO_COME : DGR_MSGTYP_UPDATE_DIRECT), DGR_ITEM_LIGHT_BRI, new_bri, DGR_ITEM_BRI_POWER_ON, new_bri);
 #endif  // USE_DEVICE_GROUPS
 #ifdef USE_PWM_DIMMER_REMOTE
       if (active_remote_pwm_dimmer) {

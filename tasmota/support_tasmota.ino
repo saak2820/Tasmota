@@ -715,7 +715,12 @@ void MqttPublishTeleState(void)
 {
   ResponseClear();
   MqttShowState();
-  MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_STATE), MQTT_TELE_RETAIN);
+  MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_STATE), Settings.flag5.mqtt_state_retain);
+
+#ifdef USE_DT_VARS
+  DTVarsTeleperiod();
+#endif // USE_DT_VARS
+
 #if defined(USE_RULES) || defined(USE_SCRIPT)
   RulesTeleperiod();  // Allow rule based HA messages
 #endif  // USE_SCRIPT
@@ -956,6 +961,14 @@ void Every100mSeconds(void)
   int ExtStopBLE();
 #endif  // USE_BLE_ESP32
 
+bool CommandsReady(void) {
+  bool ready = BACKLOG_EMPTY ;
+#ifdef USE_UFILESYS
+  ready |= UfsExecuteCommandFileReady();
+#endif  // USE_UFILESYS
+  return ready;
+}
+
 void Every250mSeconds(void)
 {
 // As the max amount of sleep = 250 mSec this loop should always be taken...
@@ -1016,7 +1029,7 @@ void Every250mSeconds(void)
 
   switch (TasmotaGlobal.state_250mS) {
   case 0:                                                 // Every x.0 second
-    if (TasmotaGlobal.ota_state_flag && BACKLOG_EMPTY) {
+    if (TasmotaGlobal.ota_state_flag && CommandsReady()) {
       TasmotaGlobal.ota_state_flag--;
       if (2 == TasmotaGlobal.ota_state_flag) {
         RtcSettings.ota_loader = 0;                       // Try requested image first
@@ -1086,9 +1099,11 @@ void Every250mSeconds(void)
             }
           }
 #endif  // ESP8266
-          AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "%s"), TasmotaGlobal.mqtt_data);
+          char version[50];
+          snprintf_P(version, sizeof(version), PSTR("%s-%s"), TasmotaGlobal.image_name, TasmotaGlobal.version);
+          AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "%s %s"), TasmotaGlobal.mqtt_data, version);
           WiFiClient OTAclient;
-          ota_result = (HTTP_UPDATE_FAILED != ESPhttpUpdate.update(OTAclient, TasmotaGlobal.mqtt_data));
+          ota_result = (HTTP_UPDATE_FAILED != ESPhttpUpdate.update(OTAclient, TasmotaGlobal.mqtt_data, version));
           if (!ota_result) {
 #ifndef FIRMWARE_MINIMAL
             int ota_error = ESPhttpUpdate.getLastError();
@@ -1126,7 +1141,7 @@ void Every250mSeconds(void)
     if (MidnightNow()) {
       XsnsCall(FUNC_SAVE_AT_MIDNIGHT);
     }
-    if (TasmotaGlobal.save_data_counter && BACKLOG_EMPTY) {
+    if (TasmotaGlobal.save_data_counter && CommandsReady()) {
       TasmotaGlobal.save_data_counter--;
       if (TasmotaGlobal.save_data_counter <= 0) {
         if (Settings.flag.save_state) {                   // SetOption0 - Save power state and use after restart
@@ -1146,7 +1161,7 @@ void Every250mSeconds(void)
         TasmotaGlobal.save_data_counter = Settings.save_data;
       }
     }
-    if (TasmotaGlobal.restart_flag && BACKLOG_EMPTY) {
+    if (TasmotaGlobal.restart_flag && CommandsReady()) {
       if ((214 == TasmotaGlobal.restart_flag) || (215 == TasmotaGlobal.restart_flag) || (216 == TasmotaGlobal.restart_flag)) {
         // Backup current SSIDs and Passwords
         char storage_ssid1[strlen(SettingsText(SET_STASSID1)) +1];
@@ -1543,7 +1558,7 @@ void GpioInit(void)
   ConvertGpios();
 #endif  // ESP8266
 
-  for (uint32_t i = 0; i < ARRAY_SIZE(Settings.user_template.gp.io); i++) {
+  for (uint32_t i = 0; i < nitems(Settings.user_template.gp.io); i++) {
     if ((Settings.user_template.gp.io[i] >= AGPIO(GPIO_SENSOR_END)) && (Settings.user_template.gp.io[i] < AGPIO(GPIO_USER))) {
       Settings.user_template.gp.io[i] = AGPIO(GPIO_USER);  // Fix not supported sensor ids in template
     }
@@ -1551,7 +1566,7 @@ void GpioInit(void)
 
   myio template_gp;
   TemplateGpios(&template_gp);
-  for (uint32_t i = 0; i < ARRAY_SIZE(Settings.my_gp.io); i++) {
+  for (uint32_t i = 0; i < nitems(Settings.my_gp.io); i++) {
     if ((Settings.my_gp.io[i] >= AGPIO(GPIO_SENSOR_END)) && (Settings.my_gp.io[i] < AGPIO(GPIO_USER))) {
       Settings.my_gp.io[i] = GPIO_NONE;             // Fix not supported sensor ids in module
     }
@@ -1563,7 +1578,7 @@ void GpioInit(void)
     }
   }
 
-  for (uint32_t i = 0; i < ARRAY_SIZE(TasmotaGlobal.my_module.io); i++) {
+  for (uint32_t i = 0; i < nitems(TasmotaGlobal.my_module.io); i++) {
     uint32_t mpin = ValidPin(i, TasmotaGlobal.my_module.io[i]);
 
     DEBUG_CORE_LOG(PSTR("INI: gpio pin %d, mpin %d"), i, mpin);
@@ -1635,7 +1650,7 @@ void GpioInit(void)
     if (mpin) { SetPin(i, mpin); }                  // Anything above GPIO_NONE and below GPIO_SENSOR_END
   }
 
-//  AddLogBufferSize(LOG_LEVEL_DEBUG, (uint8_t*)TasmotaGlobal.gpio_pin, ARRAY_SIZE(TasmotaGlobal.gpio_pin), sizeof(TasmotaGlobal.gpio_pin[0]));
+//  AddLogBufferSize(LOG_LEVEL_DEBUG, (uint8_t*)TasmotaGlobal.gpio_pin, nitems(TasmotaGlobal.gpio_pin), sizeof(TasmotaGlobal.gpio_pin[0]));
 
   analogWriteRange(Settings.pwm_range);      // Default is 1023 (Arduino.h)
   analogWriteFreq(Settings.pwm_frequency);   // Default is 1000 (core_esp8266_wiring_pwm.c)
@@ -1702,7 +1717,7 @@ void GpioInit(void)
   AddLogSpi(1, Pin(GPIO_SPI_CLK), Pin(GPIO_SPI_MOSI), Pin(GPIO_SPI_MISO));
 #endif  // USE_SPI
 
-  for (uint32_t i = 0; i < ARRAY_SIZE(TasmotaGlobal.my_module.io); i++) {
+  for (uint32_t i = 0; i < nitems(TasmotaGlobal.my_module.io); i++) {
     uint32_t mpin = ValidPin(i, TasmotaGlobal.my_module.io[i]);
 //    AddLog(LOG_LEVEL_DEBUG, PSTR("INI: gpio pin %d, mpin %d"), i, mpin);
     if (AGPIO(GPIO_OUTPUT_HI) == mpin) {

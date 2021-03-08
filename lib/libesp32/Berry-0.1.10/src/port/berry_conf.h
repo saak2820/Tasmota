@@ -8,19 +8,6 @@
 #ifndef BERRY_CONF_H
 #define BERRY_CONF_H
 
-#include <pgmspace.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-    extern int strncmp_PP(const char * str1P, const char * str2P, size_t size);
-    extern char * strchr_P(const char *s, int c);
-
-#ifdef __cplusplus
-}
-#endif
-
 #include <assert.h>
 
 /* Macro: BE_DEBUG
@@ -38,7 +25,7 @@ extern "C" {
  * type when the value is 2.
  * Default: 2
  */
-#define BE_INTGER_TYPE                  1
+#define BE_INTGER_TYPE                  1           // use long int = uint32_t
 
 /* Macro: BE_USE_SINGLE_FLOAT
  * Select floating point precision.
@@ -47,18 +34,18 @@ extern "C" {
  * numbers.
  * Default: 0
  **/
-#define BE_USE_SINGLE_FLOAT             1
+#define BE_USE_SINGLE_FLOAT             1           // use `float` not `double`
 
 /* Macro: BE_USE_PRECOMPILED_OBJECT
  * Use precompiled objects to avoid creating these objects at
  * runtime. Enable this macro can greatly optimize RAM usage.
  * Default: 1
- **/
-#ifdef ESP8266
-#define BE_USE_PRECOMPILED_OBJECT       0
-#else
-#define BE_USE_PRECOMPILED_OBJECT       0           // will enable later when stabilized
-#endif
+//  **/
+// #ifdef ESP8266
+// #define BE_USE_PRECOMPILED_OBJECT       0
+// #else
+#define BE_USE_PRECOMPILED_OBJECT       1           // will enable later when stabilized
+// #endif
 
 /* Macro: BE_DEBUG_RUNTIME_INFO
  * Set runtime error debugging information.
@@ -76,6 +63,12 @@ extern "C" {
  * Default: 1
  **/
 #define BE_DEBUG_VAR_INFO               0
+
+/* Macro: BE_USE_OBSERVABILITY_HOOK
+ * Use the obshook function to report low-level actions.
+ * Default: 0
+ **/
+#define BE_USE_OBSERVABILITY_HOOK       1
 
 /* Macro: BE_STACK_TOTAL_MAX
  * Set the maximum total stack size.
@@ -118,14 +111,14 @@ extern "C" {
  * otherwise disable the feature.
  * Default: 1
  **/
-#define BE_USE_BYTECODE_SAVER           0
+#define BE_USE_BYTECODE_SAVER           1
 
 /* Macro: BE_USE_BYTECODE_LOADER
  * Enable load bytecode from file when BE_USE_BYTECODE_LOADER is not 0,
  * otherwise disable the feature.
  * Default: 1
  **/
-#define BE_USE_BYTECODE_LOADER          0
+#define BE_USE_BYTECODE_LOADER          1
 
 /* Macro: BE_USE_SHARED_LIB
  * Enable shared library  when BE_USE_SHARED_LIB is not 0,
@@ -160,7 +153,7 @@ extern "C" {
 #define BE_USE_TIME_MODULE              0
 #define BE_USE_OS_MODULE                0
 #define BE_USE_SYS_MODULE               0
-#define BE_USE_DEBUG_MODULE             0
+#define BE_USE_DEBUG_MODULE             1
 #define BE_USE_GC_MODULE                1
 
 /* Macro: BE_EXPLICIT_XXX

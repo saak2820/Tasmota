@@ -402,7 +402,7 @@ void SendReceiveDeviceGroupMessage(struct device_group * device_group, struct de
           case DGR_ITEM_POWER:
             if (Settings.flag4.multiple_device_groups) {  // SetOption88 - Enable relays in separate device groups
               uint32_t device = Settings.device_group_tie[device_group_index];
-              if (device) {
+              if (device && device <= TasmotaGlobal.devices_present) {
                 bool on = (value & 1);
                 if (on != ((TasmotaGlobal.power >> (device - 1)) & 1)) ExecuteCommandPower(device, (on ? POWER_ON : POWER_OFF), SRC_REMOTE);
               }
@@ -480,7 +480,7 @@ cleanup:
   }
 }
 
-bool _SendDeviceGroupMessage(uint32_t device, DevGroupMessageType message_type, ...)
+bool _SendDeviceGroupMessage(int32_t device, DevGroupMessageType message_type, ...)
 {
   // If device groups is not up, ignore this request.
   if (!device_groups_up) return 1;

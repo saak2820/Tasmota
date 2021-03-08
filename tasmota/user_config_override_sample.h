@@ -96,6 +96,7 @@ Examples :
 #undef  FRITZBOX_PORT
 #define FRITZBOX_PORT         49000             //
 
+// !!! Remember that your changes GOES AT THE BOTTOM OF THIS FILE right before the last #endif !!! 
 */
 
 

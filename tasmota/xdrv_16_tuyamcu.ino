@@ -62,7 +62,7 @@ struct TUYA {
   uint16_t CTMin = 153;                   // Minimum CT level allowed - When SetOption82 is enabled will default to 200
   uint16_t CTMax = 500;                   // Maximum CT level allowed - When SetOption82 is enabled will default to 380
   bool ModeSet = false;                   // Controls 0 - Single Tone light, 1 - RGB Light
-  uint16_t Sensors[14];                   // Stores the values of Sensors connected to the Tuya Device
+  int16_t Sensors[14];                    // Stores the values of Sensors connected to the Tuya Device
   bool SensorsValid[14];                  // Bool used for nullify the sensor value until a real value is received from the MCU
   bool SuspendTopic = false;              // Used to reduce the load at init time or when polling the configuraton on demand
   uint32_t ignore_topic_timeout = 0;      // Suppress the /STAT topic (if enabled) to avoid data overflow until the configuration is over
@@ -318,7 +318,7 @@ int StrCmpNoCase(char const *Str1, char const *Str2) // Compare case sensistive 
   }
 }
 
-float TuyaAdjustedTemperature(uint16_t packetValue, uint8_t res)
+float TuyaAdjustedTemperature(int16_t packetValue, uint8_t res)
 {
     switch (res)
     {
@@ -330,11 +330,11 @@ float TuyaAdjustedTemperature(uint16_t packetValue, uint8_t res)
         break;
     case 3:
         return (float)packetValue / 1000.0;
-        break;    
+        break;
     default:
         return (float)packetValue;
         break;
-    } 
+    }
 }
 /*********************************************************************************************\
  * Internal Functions
@@ -621,6 +621,10 @@ void LightSerialDuty(uint16_t duty, char *hex_char, uint8_t TuyaIdx)
       CTLight = true;
       dpid = TuyaGetDpId(TUYA_MCU_FUNC_CT);
       } else { dpid = TuyaGetDpId(TUYA_MCU_FUNC_DIMMER2); }
+    }
+
+    if (Tuya.ignore_dim && Tuya.ignore_dimmer_cmd_timeout < millis()) {
+      Tuya.ignore_dim = false;
     }
 
     if (duty > 0 && !Tuya.ignore_dim && TuyaSerial && dpid > 0) {
@@ -951,7 +955,7 @@ void TuyaNormalPowerModePacketProcess(void)
         uint8_t key1_gpio = Tuya.buffer[7];
         bool key1_set = false;
         bool led1_set = false;
-        for (uint32_t i = 0; i < ARRAY_SIZE(Settings.my_gp.io); i++) {
+        for (uint32_t i = 0; i < nitems(Settings.my_gp.io); i++) {
           if (Settings.my_gp.io[i] == AGPIO(GPIO_LED1)) led1_set = true;
           else if (Settings.my_gp.io[i] == AGPIO(GPIO_KEY1)) key1_set = true;
         }
