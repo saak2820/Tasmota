@@ -135,7 +135,7 @@ void TR064::initServiceURLs() {
                 }                
             }
             
-            deb_println("[TR064], message: reading done", DEBUG_INFO);                 
+            deb_println("[TR064] message: reading done", DEBUG_INFO);                 
             delay(10);
         }    
         

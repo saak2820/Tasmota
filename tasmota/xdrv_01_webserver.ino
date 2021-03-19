@@ -1966,7 +1966,7 @@ void OtherSaveSettings(void)
 #endif  // USE_EMULATION
 
   snprintf_P(message, sizeof(message), PSTR(D_LOG_OTHER D_MQTT_ENABLE " %s, " D_CMND_EMULATION " %d, " D_CMND_DEVICENAME " %s, " D_CMND_FRIENDLYNAME),
-    GetStateText(Settings.flag.mqtt_enabled), GetStateText(Settings.flag5.fritzbox_enabled), Settings.flag2.emulation, SettingsText(SET_DEVICENAME));
+    GetStateText(Settings.flag.mqtt_enabled), Settings.flag2.emulation, SettingsText(SET_DEVICENAME));
   for (uint32_t i = 0; i < MAX_FRIENDLYNAMES; i++) {
     snprintf_P(webindex, sizeof(webindex), PSTR("a%d"), i);
     WebGetArg(webindex, tmp, sizeof(tmp));
@@ -2163,7 +2163,7 @@ void HandleInformation(void)
     WSContentSend_P(PSTR("}1" D_MQTT "}2" D_DISABLED));
   }
 #ifdef USE_FRITZBOX
-AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "fritzbox_enabled %d"), Settings.flag5.fritzbox_enabled);
+AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "fritzbox_enabled %d"), Settings.flag5.fritzbox_enabled);
   if (Settings.flag5.fritzbox_enabled) {  // SetOption120 - Enable TR064
     WSContentSend_P(PSTR("}1" D_FRITZBOX_HOST "}2%s"), SettingsText(SET_FRITZBOX_HOST));
     WSContentSend_P(PSTR("}1" D_FRITZBOX_PORT "}2%d"), Settings.fritzbox_port);

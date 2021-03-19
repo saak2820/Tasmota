@@ -320,7 +320,6 @@ enum SettingsTextIndex { SET_OTAURL,
                          SET_MQTTPREFIX1, SET_MQTTPREFIX2, SET_MQTTPREFIX3,  // MAX_MQTT_PREFIXES
                          SET_STASSID1, SET_STASSID2,  // MAX_SSIDS
                          SET_STAPWD1, SET_STAPWD2,  // MAX_SSIDS
-                         SET_FRITZBOX_HOST, SET_FRITZBOX_USER, SET_FRITZBOX_PASS,
                          SET_HOSTNAME, SET_SYSLOG_HOST,
                          SET_WEBPWD, SET_CORS,
                          SET_MQTT_HOST, SET_MQTT_CLIENT,
@@ -340,6 +339,7 @@ enum SettingsTextIndex { SET_OTAURL,
                          SET_DEV_GROUP_NAME1, SET_DEV_GROUP_NAME2, SET_DEV_GROUP_NAME3, SET_DEV_GROUP_NAME4,  // MAX_DEV_GROUP_NAMES
                          SET_DEVICENAME,
                          SET_TELEGRAM_TOKEN, SET_TELEGRAM_CHATID,
+                         SET_FRITZBOX_HOST, SET_FRITZBOX_USER, SET_FRITZBOX_PASS,
 #ifdef ESP8266
                          SET_ADC_PARAM1,
                          SET_SWITCH_TXT1, SET_SWITCH_TXT2, SET_SWITCH_TXT3, SET_SWITCH_TXT4, SET_SWITCH_TXT5, SET_SWITCH_TXT6, SET_SWITCH_TXT7, SET_SWITCH_TXT8,  // MAX_SWITCHES_TXT

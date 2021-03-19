@@ -244,7 +244,7 @@ void FritzBoxSaveSettings(void)
   char stemp2[TOPSZ];
 
   WebGetArg("fh", tmp, sizeof(tmp));
-  AddLog_P(LOG_LEVEL_INFO,"fh ",tmp);
+  AddLog(LOG_LEVEL_INFO,"fh ",tmp);
   SettingsUpdateText(SET_FRITZBOX_HOST, (!strlen(tmp)) ? FRITZBOX_HOST : (!strcmp(tmp,"0")) ? "" : tmp);
   WebGetArg("fl", tmp, sizeof(tmp));
   Settings.fritzbox_port = (!strlen(tmp)) ? FRITZBOX_PORT : atoi(tmp);
@@ -253,7 +253,7 @@ void FritzBoxSaveSettings(void)
   WebGetArg("fp", tmp, sizeof(tmp));
   SettingsUpdateText(SET_FRITZBOX_PASS, (!strlen(tmp)) ? "" : (!strcmp(tmp, D_ASTERISK_PWD)) ? SettingsText(SET_FRITZBOX_PASS) : tmp);
   
-  AddLog_P(LOG_LEVEL_INFO, SettingsText(SET_FRITZBOX_HOST), Settings.fritzbox_port, SettingsText(SET_FRITZBOX_USER));
+  AddLog(LOG_LEVEL_INFO, SettingsText(SET_FRITZBOX_HOST), Settings.fritzbox_port, SettingsText(SET_FRITZBOX_USER));
   
 }
 #endif  // USE_WEBSERVER
