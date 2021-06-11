@@ -181,7 +181,7 @@ void FBInit(void) {
   if (!TasmotaGlobal.global_state.network_down) {
 
     tr064.debug_level = Settings.seriallog_level;
-    tr064.setServer(FRITZBOX_HOST, Settings.fritzbox_port,FRITZBOX_USER, FRITZBOX_PASS);
+    tr064.setServer(Settings.fritzbox_port, FRITZBOX_HOST, FRITZBOX_USER, FRITZBOX_PASS);
     AddLog_P(LOG_LEVEL_INFO, "FBInit: TR064.init %s",tr064.state()<0?"NoServices":"OK");
   }else{
     AddLog_P(LOG_LEVEL_INFO, "FBInit: network.down");

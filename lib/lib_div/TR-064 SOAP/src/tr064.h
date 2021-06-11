@@ -39,21 +39,9 @@
 
 #define arr_len( x )  ( sizeof( x ) / sizeof( *x ) ) ///< Gives the length of an array
 
-// MQTT_SOCKET_TIMEOUT: socket timeout interval in Seconds
-#ifndef TR064_SOCKET_TIMEOUT
-#define TR064_SOCKET_TIMEOUT 1500
-#endif
-
-// Different debug level
-// #define DEBUG_NONE 0        ///< Print no debug messages whatsoever
-// #define DEBUG_ERROR 1        ///< Only print error messages
-// #define DEBUG_WARNING 2        ///< Only print error and warning messages
-// #define DEBUG_INFO 3        ///< Print error, warning and info messages
-// #define DEBUG_VERBOSE 4        ///< Print all messages
-
 // Possible values for client.state()
-#define TR064_NO_SERVICES           -1
-#define TR064_SERVICES_LOADED       0
+#define TR064_NO_SERVICES           -1 ///< No Service actions will not execute
+#define TR064_SERVICES_LOADED       0 ///< Service loaded
 
 
 /**************************************************************************/
@@ -66,45 +54,48 @@
 
 class TR064 {
     public:
-        enum LoggingLevels {DEBUG_NONE, DEBUG_ERROR, DEBUG_WARNING, DEBUG_INFO, DEBUG_VERBOSE};
-
+        /*!  Different debug level
+         *   DEBUG_NONE         ///< Print no debug messages whatsoever
+         *   DEBUG_ERROR        ///< Only print error messages
+         *   DEBUG_WARNING      ///< Only print error and warning messages
+         *   DEBUG_INFO         ///< Print error, warning and info messages
+         *   DEBUG_VERBOSE      ///< Print all messages
+         */
+        enum LoggingLevels {DEBUG_NONE, DEBUG_ERROR, DEBUG_WARNING, DEBUG_INFO, DEBUG_VERBOSE}; 
+        
         TR064();
-        TR064(uint16_t port, const String&ip, const String&user, const String&pass);
-        virtual ~TR064() {}
-        TR064& setServer(String ip, uint16_t port, String user, String pass);
+        TR064(uint16_t port, const String& ip, const String& user, const String& pass);
+        ~TR064() {}
+        TR064& setServer(uint16_t port, const String& ip, const String& user, const String& pass);
         void init();
-        void initNonce();
-
+        int state();       
+        
         bool action(const String& service, const String& act);
         bool action(const String& service, const String& act, String params[][2], int nParam);
-        bool action(const String& service, const String& act, String params[][2], int nParam, String (*req)[2], int nReq);
-        String xmlTakeParam(const String& inStr, String needParam);
-        String xmlTakeInsensitiveParam(const String& inStr,String needParam);
-        String xmlTakeSensitiveParam(const String& inStr,String needParam);
+        bool action(const String& service, const String& act, String params[][2], int nParam, String (*req)[2], int nReq);        
+
         String md5String(const String& s);
         String byte2hex(byte number);
         int debug_level; ///< Available levels are `DEBUG_NONE`, `DEBUG_ERROR`, `DEBUG_WARNING`, `DEBUG_INFO`, and `DEBUG_VERBOSE`.
-        boolean connected();
-        void disconnect(bool disconnect_package = false);
-        int state();        
+         
     private:
         WiFiClient tr064client;
         HTTPClient http;
         
         //TODO: More consistent naming.
+        
         void initServiceURLs();
         void deb_print(const String& message, int level);
         void deb_println(const String& message, int level);
         bool action_raw(const String& service,const String& act, String params[][2], int nParam);
-        void takeNonce(const String& xml);
-        bool httpRequest(const String& url, const  String& xml, const  String& action);
+        void takeNonce();
         bool httpRequest(const String& url,  const String& xml, const  String& action, bool retry);
         String generateAuthToken();
         String generateAuthXML();
         String findServiceURL(const String& service);
         String clearOldServiceName(const String& service);
-        String _xmlTakeParam(const String& inStr, String needParam);
-        void clear();
+        bool xmlTakeParam(String& value, const String& needParam);
+        
         int _state;
         String _ip;
         uint16_t _port;
@@ -113,7 +104,6 @@ class TR064 {
         String _realm; //To be requested from the router
         String _secretH; //to be generated
         String _nonce = "";
-        String _authtoken ="";
 
         const char* const _requestStart = "<?xml version=\"1.0\"?><s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\" s:encodingStyle=\"http://schemas.xmlsoap.org/soap/encoding/\">";
         const char* const _detectPage = "/tr64desc.xml";
@@ -125,8 +115,6 @@ class TR064 {
         TODO: Remove 100 services limits here
         */
         String _services[100][2];
-        String _payload;
-        int _returnCode = 0;
 };
 
 #endif
