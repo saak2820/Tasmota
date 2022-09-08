@@ -17,6 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   pio device monitor > logFile.txt
 */
+#define USE_FRITZBOX 
 #ifdef USE_FRITZBOX
 
 #ifdef ESP8266
@@ -30,13 +31,13 @@
 
 #include <tr064.h>
 
-WiFiClient tr064client;
+WiFiClient tr064client();
 /*********************************************************************************************\
  * TR-064 protocol call
  *
  *
  * Tested with defines
- * #define USE_fritzbox                             // Support for tr-064 protocol
+ * #define USE_FRITZBOX                             // Support for tr-064 protocol
  \*********************************************************************************************/
 
 #define XDRV_78                    78
@@ -64,23 +65,36 @@ uint16_t SendFritzBox(char *buffer) {
   const char *service;
   const char *action;
   const char *param;
+  const char *url;
   char *fparams,*fparamsend,*freq;
   char auth=0;
   uint16_t status=1;
-  int ip=0,iq=0,j;
+  int np=0,nq=0,j=0;
   //TR064 *tr064=0;
   uint16_t blen;
   char *endcmd;
   char *cp;
   // String tr064_params[][2];// = {{"NewX_AVM-DE_PhoneNumber", "**799"}};
-  // String tr064_req[][2];// = {{}};
   String tr064_params[][2]= {{}};
   String tr064_req[][2] = {{}};
-
+  //char *tr064_params[][2]= {{}};
+  //char *tr064_req[][2] = {{}};
+  
   AddLog_P(LOG_LEVEL_DEBUG_MORE,PSTR(D_LOG_FRITZBOX   "Im in SendFritzbox"));
-while (*buffer==' ') buffer++;
+  //while (*buffer==' ') buffer++;
 
-if (*buffer!='[') {
+  char* cpy = buffer;  // an alias to iterate through buffer without moving buffer
+  char* temp = buffer;
+
+  while (*cpy)
+  {
+      if (*cpy != ' ')
+          *temp++ = *cpy;
+      cpy++;
+  }
+  *temp = 0;
+
+  if (*buffer!='[') {
       goto exit;
   }
   buffer++;
@@ -89,15 +103,17 @@ if (*buffer!='[') {
   if (!endcmd) {
     goto exit;
   }
+  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_FRITZBOX "buffer: %s"),buffer);
 
-
-  blen=(uint32_t)endcmd-(uint32_t)buffer;
+  blen=(uint32_t)endcmd+1-(uint32_t)buffer;
   oparams=(char*)calloc(blen+2,1);
   if (!oparams) return 4;
   params=oparams;
   strncpy(oparams,buffer,blen+2);
   oparams[blen]=0;
   
+  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_FRITZBOX "params: %s"),params);
+
   service=strtok(params,",\"");
   AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_FRITZBOX "service: %s"),service);
   if (!service) {
@@ -108,69 +124,100 @@ if (*buffer!='[') {
   AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_FRITZBOX "action: %s"),action);
   if (!action) {
       goto exit;
-  }
- 
- fparams=strtok(NULL,"]");
-
+  }  
   
- if (fparams && strstr(fparams,"{{")){
-    
-    fparams +=2;
-    fparamsend = strstr(fparams,"}}");
-    char found [fparamsend- fparams];
-    strncpy ( found, fparams, fparamsend- fparams);
-    found[fparamsend- fparams] = '\0';   /* null character manually added */
-    AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_FRITZBOX "found params: %s"),found);
-    fparams=strtok(found,"{,}\"");
-    
-    j = 0;
-    while (fparams != NULL)
-    {
-      AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_FRITZBOX "parameter: %s"),fparams);
-      tr064_params[ip][j]=String(FPSTR(fparams));
-      fparams=strtok(NULL,"{,}\"");
-      ip = ip +j;
-      j = 1 -j;
-    }
-    
-    if(fparamsend){
-      freq= strstr(fparamsend,"{{");
-      if (freq) {
-        //freq +=2;
-        
-        j=0;
-        freq=strtok(NULL,"{,}\"");
-        while (freq != NULL)
-        {
-          
-          tr064_req[iq][j]=String(FPSTR(freq));
-          freq=strtok(NULL,"{,}\"");
-          AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_FRITZBOX "requests: %s"),freq);
-          
-          iq=iq+j;j = 1 -j;
-        }
+   fparams=strtok(NULL,"]");
+   if (fparams && strstr(fparams,"{{")){ 
+      
+      fparams = fparams + 2;
+      AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_FRITZBOX "fparams: %s"),fparams);
+      fparamsend = strstr(fparams,"}}");
+      AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_FRITZBOX "fparamsend: %s"),fparamsend);
+
+      char found [fparamsend- fparams];
+      strncpy ( found, fparams, fparamsend - fparams);
+      found[fparamsend - fparams] = '\0';   /* NULL character manually added */
+      AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_FRITZBOX "found: %s"),found); 
+
+      fparams=strtok(found,"{,}\"");    
+      j = 0;
+      while (fparams != NULL)
+      {
+        AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_FRITZBOX "parameter:[%d][%d] = %s"),np,j,fparams);
+        tr064_params[np][j]=String(FPSTR(fparams));
+        fparams=strtok(NULL,"{,}\"");
+        np = np +j;
+        j = 1 -j;
       }
-    }
- }
-  AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_FRITZBOX"FBInit: TR064 Services: %s"),tr064.state()<0?"NoServices":"OK");
-      if(tr064.state()<0){
-        tr064.init();
+      fparams = fparamsend +2;
+      
+      AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_FRITZBOX "fparams after parameter: %s"),fparams);
+      
+      if (fparams && strstr(fparams,"{{")){  
+        fparams = fparams + 2;
+        AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_FRITZBOX "fparams: %s"),fparams);
+        fparamsend = strstr(fparams,"}}");
+        AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_FRITZBOX "found fparamsend: %s"),fparamsend);
+        
+        char found [fparamsend - fparams];
+        strncpy ( found, fparams, fparamsend - fparams);
+        found[fparamsend - fparams] = '\0';   /* NULL character manually added */
+        AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_FRITZBOX "found request: %s"),found); 
+        
+        fparams=strtok(found,"{,}\"");      
+        while (fparams != NULL)
+        {            
+          AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_FRITZBOX "request: %d = %s"),nq,fparams);
+          tr064_req[nq][0]=String(FPSTR(fparams));
+          tr064_req[nq][1]="";
+          fparams=strtok(NULL,"{,}\"");            
+          nq++;      
+        }
+              
       }
       
-      if(tr064.state()==0){      
-        
-        AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_FRITZBOX "SendFritzBox: send action: %s"),action);
+     
+    }else{
+        AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_FRITZBOX "No fparams"));
+    }
+ // }  
 
-
-          tr064.action(service, action, tr064_params, ip);//, tr064_req, iq);
-          
-          status=0; 
-          AddLog_P(LOG_LEVEL_INFO, "FBInit: TR064.init %s",tr064.state()<0?"NoServices":"OK");
-        
-      }else{
-        AddLog_P(LOG_LEVEL_ERROR, PSTR(D_LOG_FRITZBOX " no Services Loaded")); 
+  if (fparams != NULL  && *fparams!= '\0'){
+    url=strtok(fparams,",\"");
+    AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_FRITZBOX "url: %s"),url);
+  } else{
+    AddLog_P(LOG_LEVEL_DEBUG_MORE,PSTR(D_LOG_FRITZBOX   "No Url"));
+  }
+  if (url && !url[0]) {
+    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_FRITZBOX "SendFritzBox: send action with url: %s and %d parameter"),url, np);
+    
+    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_FRITZBOX "SendFritzBox: send action: %s"),action);
+    if(tr064.action(service, action, tr064_params, np, tr064_req, nq, url)){
+      AddLog_P(LOG_LEVEL_INFO, "FBInit: TR064.init %s",tr064.state()<0?"NoServices":"OK");
+      
+    }else{
+      goto exit;
+    }
+  }else{
+  
+    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_FRITZBOX"FBInit: TR064 Services: %s"),tr064.state()<0?"NoServices":"OK");
+    if(tr064.state()<0){
+      tr064.init();
+    }
+    if(tr064.state()==0){              
+      AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_FRITZBOX "SendFritzBox: send action: %s"),action);
+      tr064.action(service, action, tr064_params, np, tr064_req, nq);      
+      AddLog_P(LOG_LEVEL_INFO, "FBInit: TR064.init %s",tr064.state()<0?"NoServices":"OK");      
+    }
+  }
+  for (uint16_t i=0; i<nq; ++i) {
+        char charBuf[50];
+        tr064_req[i][1].toCharArray(charBuf, 50);
+        AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_FRITZBOX "requestParam: %s"),charBuf);
       }
-      AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_FRITZBOX "SendFritzBox: exit")); 
+  status=0; 
+  AddLog_P(LOG_LEVEL_INFO, "FBInit: TR064.init %s",tr064.state()<0?"NoServices":"OK");
+  AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_FRITZBOX "SendFritzBox: exit")); 
     
 exit:
   if (oparams) free(oparams);
